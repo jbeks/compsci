@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 def simple_plot(xs, ys, type=0):
     for i in range(len(xs)):
         if type == 0:
-            plt.scatter(xs[i], ys[i], c='C'+str(i%9), s=5)
+            plt.scatter(xs[i], ys[i], c='C'+str(i%9), s=10)
         elif type ==1:
             plt.plot(xs[i], ys[i], c='C'+str(i%9), lw=2)
     plt.axvline(0, c='k')
@@ -16,7 +16,7 @@ def simple_plot(xs, ys, type=0):
 #    plt.xlim([-2,12])
     plt.show()
 
-class Body_Verlet:
+class Body:
     def __init__(self, p, m, v):
         assert len(p) == 3, "Insufficient location parameters"
         assert len(v) == 3, "Insufficient velocity parameters"
@@ -24,6 +24,7 @@ class Body_Verlet:
         self.m = float(m)
         self.v = np.array(v)
         self.p_tmp = np.zeros(3)
+        self.e0 = 0
     def __repr__(self):
         return "({}, {}, {})".format(self.m, self.p, self.v)
     def acceleration(self, sys, G):
@@ -31,82 +32,103 @@ class Body_Verlet:
         for b in sys:
             if b == self:
                 continue
-            vector = (b.p - self.p)
+            vector = b.p - self.p
             a += vector * G * b.m / float(np.linalg.norm(vector) ** 3)
         return a
-    def calculate_update(self, sys, dt, G):
-        a = self.acceleration(sys, G)
-        self.v = self.v + 0.5 * a * dt
-        self.p_tmp = self.p + self.v * dt
-    def confirm_update(self):
-        self.p = self.p_tmp
-# TODO old energy code (might still be useful)
-#    def potential_E(self, system, G):
-#        result = 0
-#        for i in range(len(system)):
-#            for j in range(i):
-#                result += G* system[i].m * system[j].m / \
-#                    np.linalg.norm(system[j].p - system[i].p)
-#        return result
-#    def kinetic_E(self, system):
-#        result = 0
-#        for i in range(len(system)):
-#            result += np.linalg.norm(system[i].m * system[i].v) ** 2 / \
-#                float(2 * system[i].m)
-#        return result
+    def set_e0(self, sys, G):
+        self.e0 = self.get_ek(sys) + self.get_ep(sys, G)
+    def get_ek(self, sys):
+        return .5 * self.m * np.dot(self.v, self.v)
+    def get_ep(self, sys, G):
+        ep = 0
+        for b in sys:
+            if b == self:
+                continue
+            vector = b.p - self.p
+            ep -= G * b.m / np.linalg.norm(vector)
+        return ep * self.m
 
-class System_Verlet:
+class System:
     def __init__(self, sys, G):
         self.G = G
         self.sys = sys
+        for b in sys:
+            b.set_e0(sys, G)
     def __repr__(self):
         s = ''
         for b in self.sys:
             s += str(b) + '\n'
         return s[:-1]
     def step(self, dt):
+        for b in self.sys:
+            b.calculate_update(self.sys, dt, self.G)
+            break                                                       #TODO
+        for b in self.sys:
+            b.confirm_update()
+            break                                                       #TODO
+    def print_energy(self, t):
+        for b in self.sys:
+            ek = b.get_ek(self.sys)
+            ep = b.get_ep(self.sys, self.G)
+            etot = ek + ep
+            print('t          ', t)
+            print('ek         ', ek)
+            print('ep         ', ep)
+            print('etot       ', etot)
+            print('e0         ', b.e0)
+            print('etot - e0  ', etot - b.e0)
+            print('etot-e0/e0 ', (etot - b.e0) / b.e0)
+            break                                                       #TODO
+
+class Body_Euler(Body):
+    def calculate_update(self, sys, dt, G):
+        a = self.acceleration(sys, G)
+        self.p_tmp = self.p + self.v * dt
+        self.v = self.v + a * dt
+    def confirm_update(self):
+        self.p = self.p_tmp
+
+class Body_Verlet(Body):
+    def calculate_update(self, sys, dt, G):
+        a = self.acceleration(sys, G)
+        self.v = self.v + 0.5 * a * dt
+        self.p_tmp = self.p + self.v * dt
+    def confirm_update(self):
+        self.p = self.p_tmp
+
+class System_Verlet(System):
+    def step(self, dt):
         for _ in range(2):
-            for b in self.sys:
-                b.calculate_update(self.sys, dt, self.G)
-            for b in self.sys:
-                b.confirm_update()
+            super().step(dt)
 
-def verlet(system, dt, t, pr=False):
-# TODO old energy code (might still be useful)
-#    Eko = .5*system[0].m*np.linalg.norm(system[0].v)*np.linalg.norm(system[0].v)
-#    Eka = .5*system[1].m*np.linalg.norm(system[1].v)*np.linalg.norm(system[1].v)
-#    Epo = system[0].m*G*np.linalg.norm(system[1].p - system[0].p)
-#    Epa = system[1].m*G*np.linalg.norm(system[0].p - system[1].p)
+def simulate(sys, dt, t_end, dt_out=-1, dt_dia=-1, show_plot=False):
+    t = 0
+    t_out = dt_out -.5 * dt
+    t_dia = dt_dia -.5 * dt
 
-    lst = []
-    for i in range(int(t/float(dt))+1):
-# TODO old energy code (might still be useful)
-#        for b in system:
-#            p = b.potential_E(system, G)
-#            k = b.kinetic_E(system)
-#            print(p, k, p+k)
+    if dt_dia > 0:
+        sys.print_energy(t_dia)
 
-        if pr:
-            print(i*dt)
-            print(system)
+    lst = [[x.p for x in sys.sys]]
+    while t < t_end:
+        sys.step(dt)
+        t += dt
 
-        lst.append([x.p for x in system.sys])
-        system.step(dt)
+        if dt_dia > 0 and t >= t_dia:
+            sys.print_energy(t_dia)
+            t_dia += dt_dia
 
-# TODO old energy code (might still be useful)
-#        Eko_tmp = .5*system[0].m*np.linalg.norm(system[0].v)*np.linalg.norm(system[0].v)
-#        Eka_tmp = .5*system[1].m*np.linalg.norm(system[1].v)*np.linalg.norm(system[1].v)
-#        Epo_tmp = system[0].m*G*np.linalg.norm(system[1].p - system[0].p)
-#        Epa_tmp = system[1].m*G*np.linalg.norm(system[0].p - system[1].p)
-#        print(-Eko+Eko_tmp-Epo+Epo_tmp)
-#        print(-Eka+Eka_tmp-Epa+Epa_tmp)
-#        Eko = Eko_tmp
-#        Eka = Eka_tmp
-#        Epo = Epo_tmp
-#        Epa = Epa_tmp
+        if dt_out > 0 and t >= t_out:
+            print(sys)
+            t_out += dt_out
+
+        lst.append([x.p for x in sys.sys])
 
     lst = np.array(lst).T
-    simple_plot(lst[0], lst[1], 0)
+
+    if show_plot:
+        simple_plot(lst[0], lst[1], 0)
+
     return None
 
 def get_params(body_type):
@@ -116,7 +138,7 @@ def get_params(body_type):
         line_strip = line.strip()
         if line_strip == '':
             break
-        if line_index < 3:
+        if line_index < 5:
             params.append(float(line_strip))
         else:
             b_params = [float(x) for x in line_strip.split(' ')]
@@ -127,8 +149,18 @@ def get_params(body_type):
     return params
 
 if __name__ == "__main__":
-    params = get_params(Body_Verlet)
-    system = System_Verlet(*params[:2])
-    verlet(system, *params[2:], False)
-
+    assert len(sys.argv) == 2, "Insufficient amount of arguments"
+    itype = sys.argv[1].lower()
+    assert itype in [
+        "euler",
+        "verlet",
+    ], "Integration type not supported"
+    if itype == "verlet":
+        params = get_params(Body_Verlet)
+        system = System_Verlet(*params[:2])
+    else:
+        if itype == "euler":
+            params = get_params(Body_Euler)
+        system = System(*params[:2])
+    simulate(system, *params[2:], False)
 
