@@ -35,6 +35,10 @@ class Body:
             vector = b.p - self.p
             a += vector * G * b.m / float(np.linalg.norm(vector) ** 3)
         return a
+    def calculate_update(self, sys, dt, G):
+        assert False, "Implement in child class"
+    def confirm_update(self):
+        assert False, "Implement in child class"
     def set_e0(self, sys, G):
         self.e0 = self.get_ek(sys) + self.get_ep(sys, G)
     def get_ek(self, sys):
