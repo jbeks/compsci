@@ -42,7 +42,7 @@ class Body:
     def set_e0(self, sys, G):
         self.e0 = self.get_ek(sys) + self.get_ep(sys, G)
     def get_ek(self, sys):
-        return .5 * self.m * np.dot(self.v, self.v)
+        return .5 * self.m * np.linalg.norm(self.v) ** 2
     def get_ep(self, sys, G):
         ep = 0
         for b in sys:
