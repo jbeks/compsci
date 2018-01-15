@@ -16,29 +16,52 @@ def simple_plot(xs, ys, type=0):
 #    plt.xlim([-2,12])
     plt.show()
 
+class Integration:
+    def euler(dt, p0, v0, afunc):
+        a0 = afunc(p0)
+        p1 = p0 + v0 * dt
+        v1 = v0 + a0 * dt
+        return p1, v1
+    def verlet(dt, p0, v0, afunc):
+        a0 = afunc(p0)
+        p1 = p0 + v0 * dt + 0.5 * a0 * dt * dt
+        a1 = afunc(p1)
+        v1 = v0 + 0.5 * (a0 + a1) * dt
+        return p1, v1
+    def rk2(dt, p0, v0, afunc):
+        a0 = afunc(p0)
+        v0_5 = v0 + 0.5 * a0 * dt
+        p0_5 = p0 + 0.5 * v0 * dt
+        a0_5 = afunc(p0_5)
+        v1 = v0 + a0_5 * dt
+        p1 = p0 + v0_5 * dt
+        return p1, v1
+    def rk4(dt, p0, v0, afunc):
+        k1 = afunc(p0) * dt
+        k2 = afunc(p0 + 0.5 * v0 * dt + 0.125 * k1 * dt) * dt
+        k3 = afunc(p0 + v0 * dt + 0.5 * k2 * dt) * dt
+        p1 = p0 + v0 * dt + (1 / 6.) * (k1 + 2 * k2) * dt
+        v1 = v0 + (1 / 6.) * (k1 + 4 * k2 + k3)
+        return p1, v1
+
 class Body:
     def __init__(self, p, m, v):
         assert len(p) == 3, "Insufficient location parameters"
         assert len(v) == 3, "Insufficient velocity parameters"
-        self.p = np.array(p)
         self.m = float(m)
+        self.p = np.array(p)
         self.v = np.array(v)
         self.p_tmp = np.zeros(3)
+        self.v_tmp = np.zeros(3)
         self.e0 = 0
     def __repr__(self):
         return "({}, {}, {})".format(self.m, self.p, self.v)
-    def acceleration(self, sys, G):
-        a = 0
-        for b in sys:
-            if b == self:
-                continue
-            vector = b.p - self.p
-            a += vector * G * b.m / float(np.linalg.norm(vector) ** 3)
-        return a
-    def calculate_update(self, sys, dt, G):
-        assert False, "Implement in child class"
+    def set_update(self, p, v):
+        self.p_tmp = p
+        self.v_tmp = v
     def confirm_update(self):
         self.p = self.p_tmp
+        self.v = self.v_tmp
     def set_e0(self, sys, G):
         self.e0 = self.get_ek(sys) + self.get_ep(sys, G)
     def get_ek(self, sys):
@@ -53,9 +76,10 @@ class Body:
         return ep * self.m * G
 
 class System:
-    def __init__(self, sys, G):
+    def __init__(self, sys, G, ifunc):
         self.G = G
         self.sys = sys
+        self.ifunc = ifunc
         for b in sys:
             b.set_e0(sys, G)
     def __repr__(self):
@@ -63,9 +87,25 @@ class System:
         for b in self.sys:
             s += str(b) + '\n'
         return s[:-1]
+    # make sure sys does not contain the body with position p
+    def get_acceleration(self, p, sys, G):
+        a = 0
+        for b in sys:
+            vector = b.p - p
+            a += vector * G * b.m / float(np.linalg.norm(vector) ** 3)
+        return a
     def step(self, dt):
         for b in self.sys:
-            b.calculate_update(self.sys, dt, self.G)
+            b.set_update(
+                *self.ifunc(
+                    dt,
+                    b.p,
+                    b.v,
+                    lambda p: self.get_acceleration(
+                        p, [x for x in self.sys if x != b], self.G
+                    )
+                )
+            )
             break                                                       #TODO
         for b in self.sys:
             b.confirm_update()
@@ -87,67 +127,6 @@ class System:
 #            print('etot - e0  ', etot - b.e0)
 #            print('etot-e0/e0 ', (etot - b.e0) / b.e0)
             break                                                       #TODO
-
-class Body_Euler(Body):
-    def calculate_update(self, sys, dt, G):
-        a = self.acceleration(sys, G)
-        self.p_tmp = self.p + self.v * dt
-        self.v = self.v + a * dt
-
-class Body_Verlet(Body):
-    def calculate_update(self, sys, dt, G):
-        p0 = self.p
-        v0 = self.v
-        a0 = self.acceleration(sys, G)
-        self.v = self.v + 0.5 * a0 * dt
-        self.p = self.p + self.v * dt
-        a1 = self.acceleration(sys, G)
-        self.v = v0 + 0.5 * (a0 + a1) * dt
-        self.p_tmp = self.p
-        self.p = p0
-
-# TODO next Bodies copied from artcopsci, change to fit code more
-#      might not work when updating multiple bodies
-
-class Body_Leapfrog(Body):
-    def calculate_update(self, sys, dt, G):
-        p0 = self.p
-        a0 = self.acceleration(sys, G)
-        self.p = self.p + self.v * dt + .5 * a0 * dt * dt
-        a1 = self.acceleration(sys, G)
-        self.v = self.v + .5 * (a0 + a1) * dt
-        self.p_tmp = self.p
-        self.p = p0
-
-class Body_RK2(Body):
-    def calculate_update(self, sys, dt, G):
-        p0 = self.p
-        a0 = self.acceleration(sys, G)
-        v0 = self.v + .5 * a0 * dt
-        self.p = self.p + .5 * self.v * dt
-        a1 = self.acceleration(sys, G)
-        self.v = self.v + a1 * dt
-        self.p = p0 + v0 * dt
-        self.p_tmp = self.p
-        self.p = p0
-
-class Body_RK4(Body):
-    def calculate_update(self, sys, dt, G):
-        p0 = self.p
-        a0 = self.acceleration(sys, G)
-        self.p = p0 + .5 * self.v * dt + .125 * a0 * dt * dt
-        a1 = self.acceleration(sys, G)
-        self.p = p0 + self.v * dt + 0.5 * a1 * dt * dt
-        a2 = self.acceleration(sys, G)
-        self.p = p0 + self.v * dt + (1 / 6.) * (a0 + 2 * a1) * dt * dt
-        self.v = self.v + (1 / 6.) * (a0 + 4 * a1 + a2) * dt
-        self.p_tmp = self.p
-        self.p = p0
-
-#class System_Verlet(System):
-#    def step(self, dt):
-#        for _ in range(2):
-#            super().step(dt)
 
 def simulate(sys, dt, t_end, dt_out=-1, dt_dia=-1, show_plot=False):
     n = 0
@@ -182,7 +161,7 @@ def simulate(sys, dt, t_end, dt_out=-1, dt_dia=-1, show_plot=False):
 
     return None
 
-def get_params(body_type):
+def get_params():
     line_index = 0
     params = [[]]
     for line in sys.stdin:
@@ -194,7 +173,7 @@ def get_params(body_type):
         else:
             b_params = [float(x) for x in line_strip.split(' ')]
             params[0].append(
-                body_type(b_params[1:4], b_params[0], b_params[4:])
+                Body(b_params[1:4], b_params[0], b_params[4:])
             )
         line_index += 1
     return params
@@ -209,22 +188,15 @@ if __name__ == "__main__":
         "rk2",
         "rk4",
     ], "Integration type not supported"
-#    if itype == "verlet":
-#        params = get_params(Body_Verlet)
-#        system = System_Verlet(*params[:2])
-#    else:
     if itype == "euler":
-        btype = Body_Euler
-    elif itype == "verlet":
-        btype = Body_Verlet
-    elif itype == "leapfrog":
-        btype = Body_Leapfrog
+        ifunc = Integration.euler
+    elif itype == "verlet" or itype == "leapfrog":
+        ifunc = Integration.verlet
     elif itype == "rk2":
-        btype = Body_RK2
+        ifunc = Integration.rk2
     elif itype == "rk4":
-        btype = Body_RK4
-    params = get_params(btype)
-    system = System(*params[:2])
+        ifunc = Integration.rk4
+    params = get_params()
+    system = System(*params[:2], ifunc)
     simulate(system, *params[2:], False)
-
 
