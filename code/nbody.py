@@ -122,8 +122,8 @@ class Body_Leapfrog(Body):
 class Body_RK2(Body):
     def calculate_update(self, sys, dt, G):
         p0 = self.p
-        v0 = self.v + .5 * a0 * dt
         a0 = self.acceleration(sys, G)
+        v0 = self.v + .5 * a0 * dt
         self.p = self.p + .5 * self.v * dt
         a1 = self.acceleration(sys, G)
         self.v = self.v + a1 * dt
@@ -226,4 +226,5 @@ if __name__ == "__main__":
     params = get_params(btype)
     system = System(*params[:2])
     simulate(system, *params[2:], False)
+
 
