@@ -8,27 +8,47 @@ def simple_plot(xs, ys, type=0):
             plt.scatter(xs[i], ys[i], c='C'+str(i%9), s=10)
         elif type ==1:
             plt.plot(xs[i], ys[i], c='C'+str(i%9), lw=2)
-    plt.axvline(0, c='k')
-    plt.axhline(0, c='k')
     plt.grid(True)
-    plt.axis("equal")
+#    plt.axvline(0, c='k')
+#    plt.axhline(0, c='k')
+#    plt.axis("equal")
 #    plt.ylim([-2,12])
 #    plt.xlim([-2,12])
     plt.show()
 
+def acceleration(p, sys, G):
+    a = 0
+    for b in sys:
+        vector = b.p - p
+        a += vector * b.m / float(np.linalg.norm(vector) ** 3)
+    return a * G
+
+def jerk(p, v, sys, G):
+    j = 0
+    for b in sys:
+        p_vector = b.p - p
+        v_vector = b.v - v
+        len_p_vector = np.linalg.norm(p_vector)
+        j += b.m * (v_vector / float(len_p_vector ** 3)
+            - 3 * np.dot(p_vector, v_vector) * p_vector / len_p_vector ** 5)
+    return j * G
+
 class Integration:
-    def euler(dt, p0, v0, afunc):
+    def euler(dt, p0, v0, sys, G):
+        afunc = lambda p: acceleration(p, sys, G)
         a0 = afunc(p0)
         p1 = p0 + v0 * dt
         v1 = v0 + a0 * dt
         return p1, v1
-    def verlet(dt, p0, v0, afunc):
+    def verlet(dt, p0, v0, sys, G):
+        afunc = lambda p: acceleration(p, sys, G)
         a0 = afunc(p0)
         p1 = p0 + v0 * dt + 0.5 * a0 * dt * dt
         a1 = afunc(p1)
         v1 = v0 + 0.5 * (a0 + a1) * dt
         return p1, v1
-    def rk2(dt, p0, v0, afunc):
+    def rk2(dt, p0, v0, sys, G):
+        afunc = lambda p: acceleration(p, sys, G)
         a0 = afunc(p0)
         v0_5 = v0 + 0.5 * a0 * dt
         p0_5 = p0 + 0.5 * v0 * dt
@@ -36,16 +56,29 @@ class Integration:
         v1 = v0 + a0_5 * dt
         p1 = p0 + v0_5 * dt
         return p1, v1
-    def rk4(dt, p0, v0, afunc):
+    def rk4(dt, p0, v0, sys, G):
+        afunc = lambda p: acceleration(p, sys, G)
         k1 = afunc(p0) * dt
         k2 = afunc(p0 + 0.5 * v0 * dt + 0.125 * k1 * dt) * dt
         k3 = afunc(p0 + v0 * dt + 0.5 * k2 * dt) * dt
-        p1 = p0 + v0 * dt + (1 / 6.) * (k1 + 2 * k2) * dt
-        v1 = v0 + (1 / 6.) * (k1 + 4 * k2 + k3)
+        p1 = p0 + v0 * dt + (1 / 6.0) * (k1 + 2 * k2) * dt
+        v1 = v0 + (1 / 6.0) * (k1 + 4 * k2 + k3)
+        return p1, v1
+    def hermite(dt, p0, v0, sys, G):
+        afunc = lambda p: acceleration(p, sys, G)
+        jfunc = lambda p, v: jerk(p, v, sys, G)
+        a0 = afunc(p0)
+        j0 = jfunc(p0, v0)
+        p1_p = p0 + v0 * dt + 0.5 * a0 * dt * dt + (1 / 6.0) * j0 * dt * dt *dt
+        v1_p = v0 + a0 * dt + 0.5 * j0 * dt * dt
+        a1_p = afunc(p1_p)
+        j1_p = jfunc(p1_p, v1_p)
+        v1 = v0 + 0.5 * (a0 + a1_p) * dt + (1 / 12.0) * (j0 - j1_p) * dt * dt
+        p1 = p0 + 0.5 * (v0 + v1) * dt + (1 / 12.0) * (a0 - a1_p) * dt * dt
         return p1, v1
 
 class Body:
-    def __init__(self, p, m, v):
+    def __init__(self, m, p, v):
         assert len(p) == 3, "Insufficient location parameters"
         assert len(v) == 3, "Insufficient velocity parameters"
         self.m = float(m)
@@ -88,28 +121,17 @@ class System:
             s += str(b) + '\n'
         return s[:-1]
     # make sure sys does not contain the body with position p
-    def get_acceleration(self, p, sys, G):
-        a = 0
-        for b in sys:
-            vector = b.p - p
-            a += vector * G * b.m / float(np.linalg.norm(vector) ** 3)
-        return a
     def step(self, dt):
         for b in self.sys:
             b.set_update(
                 *self.ifunc(
-                    dt,
-                    b.p,
-                    b.v,
-                    lambda p: self.get_acceleration(
-                        p, [x for x in self.sys if x != b], self.G
-                    )
+                    dt, b.p, b.v, [x for x in self.sys if x != b], self.G
                 )
             )
-            break                                                       #TODO
+#            break                                                       #TODO
         for b in self.sys:
             b.confirm_update()
-            break                                                       #TODO
+#            break                                                       #TODO
     def print_energy(self, t, n):
         for b in self.sys:
             ek = b.get_ek(self.sys)
@@ -128,31 +150,31 @@ class System:
 #            print('etot-e0/e0 ', (etot - b.e0) / b.e0)
             break                                                       #TODO
 
-def simulate(sys, dt, t_end, dt_out=-1, dt_dia=-1, show_plot=False):
+def simulate(system, dt, t_end, dt_out=-1, dt_dia=-1, show_plot=False):
     n = 0
     t =  .5 * dt
     t_out = dt_out
     t_dia = dt_dia
 
     if dt_dia > 0:
-        sys.print_energy(0, n)
+        system.print_energy(0, n)
 
-    lst = [[x.p for x in sys.sys]]
+    lst = [[x.p for x in system.sys]]
     while t < t_end:
 
-        sys.step(dt)
+        system.step(dt)
         t += dt
         n += 1
 
         if dt_dia > 0 and t >= t_dia:
-            sys.print_energy(t_dia, n)
+            system.print_energy(t_dia, n)
             t_dia += dt_dia
 
         if dt_out > 0 and t >= t_out:
-            print(sys)
+            print(system)
             t_out += dt_out
 
-        lst.append([x.p for x in sys.sys])
+        lst.append([x.p for x in system.sys])
 
     lst = np.array(lst).T
 
@@ -173,7 +195,7 @@ def get_params():
         else:
             b_params = [float(x) for x in line_strip.split(' ')]
             params[0].append(
-                Body(b_params[1:4], b_params[0], b_params[4:])
+                Body(b_params[0], b_params[1:4], b_params[4:])
             )
         line_index += 1
     return params
@@ -187,6 +209,7 @@ if __name__ == "__main__":
         "leapfrog",
         "rk2",
         "rk4",
+        "hermite",
     ], "Integration type not supported"
     if itype == "euler":
         ifunc = Integration.euler
@@ -196,7 +219,9 @@ if __name__ == "__main__":
         ifunc = Integration.rk2
     elif itype == "rk4":
         ifunc = Integration.rk4
+    elif itype == "hermite":
+        ifunc = Integration.hermite
     params = get_params()
     system = System(*params[:2], ifunc)
-    simulate(system, *params[2:], False)
+    simulate(system, *params[2:], True)
 
