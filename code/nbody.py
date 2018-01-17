@@ -1,43 +1,31 @@
 import sys
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
-def simple_plot(xs, ys, type=0):
-    for i in range(len(xs)):
-        if type == 0:
-            plt.scatter(xs[i], ys[i], c='C'+str(i%9), s=10)
-        elif type ==1:
-            plt.plot(xs[i], ys[i], c='C'+str(i%9), lw=2)
+def simple_plot(data):
+    for i in range(len(data)):
+        plt.scatter(data[i][0], data[i][1], c='C'+str(i%9), s=1)
     plt.grid(True)
-#    plt.axvline(0, c='k')
-#    plt.axhline(0, c='k')
-#    plt.axis("equal")
-#    plt.ylim([-2,12])
-#    plt.xlim([-2,12])
+    plt.axis("equal")
     plt.show()
 
 class Body:
     def __init__(self, m, p, v):
-        assert len(p) == 3, "Insufficient location parameters"
-        assert len(v) == 3, "Insufficient velocity parameters"
+        self.dim = len(p)
         self.m = float(m)
         self.p = np.array(p)
         self.v = np.array(v)
-        self.a = np.zeros(3)
-        self.j = np.zeros(3)
-#        self.p_tmp = np.zeros(3)
-#        self.v_tmp = np.zeros(3)
+        self.a = np.zeros(self.dim)
+        self.j = np.zeros(self.dim)
     def __repr__(self):
-        return "({}, {}, {})".format(self.m, self.p, self.v)
-#    def set_update(self, p, v):
-#        self.p_tmp = p
-#        self.v_tmp = v
-#    def confirm_update(self):
-#        self.p = self.p_tmp
-#        self.v = self.v_tmp
+        s = ""
+        s += "mass = " + str(self.m) + "\n"
+        s += " pos = " + " ".join([str(x) for x in self.p]) + "\n"
+        s += " vel = " + " ".join([str(x) for x in self.v])
+        return s
     def get_ek(self):
-        # TODO removed * self.m
-        return .5 * np.linalg.norm(self.v) ** 2
+        return .5 * self.m * np.linalg.norm(self.v) ** 2
     def get_ep(self, sys, G):
         ep = 0
         for b in sys:
@@ -50,16 +38,16 @@ class Body:
         self.p = p
     def set_v(self, v):
         self.v = v
-    def calc_a(self, sys, G):
-        self.a = np.zeros(3)
+    def cset_a(self, sys, G):
+        self.a = np.zeros(self.dim)
         for b in sys:
             if b == self:
                 continue
             vector = b.p - self.p
             self.a += vector * b.m / float(np.linalg.norm(vector) ** 3)
         self.a *= G
-    def calc_j(self, sys, G):
-        self.j = np.zeros(3)
+    def cset_j(self, sys, G):
+        self.j = np.zeros(self.dim)
         for b in sys:
             if b == self:
                 continue
@@ -71,7 +59,7 @@ class Body:
         self.j *= G
 
 class System:
-    def __init__(self, sys, G, itype):
+    def __init__(self, G, sys, itype):
         self.G = G
         self.sys = sys
         self.e0 = self.get_ek() + self.get_ep()
@@ -95,11 +83,10 @@ class System:
         elif itype == "hermite":
             self.ifunc = self.hermite
     def __repr__(self):
-        s = ''
+        s = ""
         for b in self.sys:
-            s += str(b) + '\n'
+            s += str(b) + "\n"
         return s[:-1]
-    # make sure sys does not contain the body with position p
     def step(self, dt):
         self.ifunc(dt)
     def get_ek(self):
@@ -121,57 +108,51 @@ class System:
         print('             E_tot - E_init = ',etot-self.e0)
         print('  (E_tot - E_init) / E_init =', (etot - self.e0) / self.e0)
     def euler(self, dt):
-        for b in self.sys: b.calc_a(self.sys, self.G); break
-        for b in self.sys: b.set_p(b.p + b.v * dt); break
-        for b in self.sys: b.set_v(b.v + b.a * dt); break
+        for b in self.sys: b.cset_a(self.sys, self.G)#; break
+        for b in self.sys: b.set_p(b.p + b.v * dt)#; break
+        for b in self.sys: b.set_v(b.v + b.a * dt)#; break
     def verlet(self, dt):
-        for b in self.sys: b.calc_a(self.sys, self.G); break
-        for b in self.sys: b.set_v(b.v + .5 * b.a * dt); break
-        for b in self.sys: b.set_p(b.p + b.v * dt); break
-        for b in self.sys: b.calc_a(self.sys, self.G); break
-        for b in self.sys: b.set_v(b.v + .5 * b.a * dt); break
+        for b in self.sys: b.cset_a(self.sys, self.G)#; break
+        for b in self.sys: b.set_v(b.v + .5 * b.a * dt)#; break
+        for b in self.sys: b.set_p(b.p + b.v * dt)#; break
+        for b in self.sys: b.cset_a(self.sys, self.G)#; break
+        for b in self.sys: b.set_v(b.v + .5 * b.a * dt)#; break
     def rk2(self, dt):
         p0 = []
         v0_5 = []
-        for b in self.sys: b.calc_a(self.sys, self.G); break
+        for b in self.sys: b.cset_a(self.sys, self.G)
         for b in self.sys:
             p0.append(b.p)
             v0_5.append(b.v + .5 * b.a * dt)
-            break
-        for b in self.sys: b.set_p(b.p + .5 * b.v * dt); break
-        for b in self.sys: b.calc_a(self.sys, self.G); break
-        for b in self.sys: b.set_v(b.v + b.a * dt); break
+        for b in self.sys: b.set_p(b.p + .5 * b.v * dt)
+        for b in self.sys: b.cset_a(self.sys, self.G)
+        for b in self.sys: b.set_v(b.v + b.a * dt)
         for i in range(len(self.sys)):
             self.sys[i].set_p(p0[i] + v0_5[i] * dt)
-            break
     def rk4(self, dt):
         p0 = []
-        v0 = []
         k1 = []
         k2 = []
         k3 = []
+        for b in self.sys: p0.append(b.p)
         for b in self.sys:
-            p0.append(b.p)
-            v0.append(b.v)
-            break
-        for b in self.sys:
-            b.calc_a(self.sys, self.G)
+            b.cset_a(self.sys, self.G)
             k1.append(b.a * dt)
-            break
         for i in range(len(self.sys)):
-            self.sys[i].set_p(p0[i] + .5 * v0[i] * dt + .125 * k1[i] * dt)
-            self.sys[i].calc_a(self.sys, self.G)
+            self.sys[i].set_p(p0[i] + .5 * self.sys[i].v * dt \
+                + .125 * k1[i] * dt)
+        for b in self.sys:
+            b.cset_a(self.sys, self.G)
             k2.append(b.a * dt)
-            break
         for i in range(len(self.sys)):
-            self.sys[i].set_p(p0[i] + v0[i] * dt + .5 * k2[i] * dt)
-            self.sys[i].calc_a(self.sys, self.G)
+            self.sys[i].set_p(p0[i] + self.sys[i].v * dt + .5 * k2[i] * dt)
+        for b in self.sys:
+            b.cset_a(self.sys, self.G)
             k3.append(b.a * dt)
-            break
         for i in range(len(self.sys)):
-            self.sys[i].set_p(p0[i] + v0[i] * dt + (k1[i] + 2*k2[i]) * dt / 6.)
-            self.sys[i].set_v(v0[i] + (k1[i] + 4*k2[i] + k3[i]) / 6.)
-            break
+            self.sys[i].set_p(p0[i] + self.sys[i].v * dt \
+                + (k1[i] + 2 * k2[i]) * dt / 6.)
+            self.sys[i].set_v(self.sys[i].v + (k1[i] + 4 * k2[i] + k3[i]) / 6.)
     def hermite(self, dt):
         p0 = []
         v0 = []
@@ -180,102 +161,104 @@ class System:
         for b in self.sys:
             p0.append(b.p)
             v0.append(b.v)
-            break
         for b in self.sys:
-            b.calc_a(self.sys, self.G)
-            b.calc_j(self.sys, self.G)
+            b.cset_a(self.sys, self.G)
+            b.cset_j(self.sys, self.G)
             a0.append(b.a)
             j0.append(b.j)
-            break
         for b in self.sys:
-            b.set_p(b.p + b.v * dt + .5 * b.a * dt*dt + b.j * dt*dt*dt / 6.)
-            b.set_v(b.v + b.a * dt + .5 * b.j * dt*dt)
-            break
+            b.set_p(b.p + b.v * dt + .5 * b.a * dt ** 2 + b.j * dt ** 3 / 6.)
+            b.set_v(b.v + b.a * dt + .5 * b.j * dt ** 2)
         for b in self.sys:
-            b.calc_a(self.sys, self.G)
-            b.calc_j(self.sys, self.G)
-            break
+            b.cset_a(self.sys, self.G)
+            b.cset_j(self.sys, self.G)
         for i in range(len(self.sys)):
             self.sys[i].set_v(v0[i] + .5 * (a0[i] + self.sys[i].a) * dt \
-                + (j0[i] - self.sys[i].j) * dt*dt / 12.)
-            break
+                + (j0[i] - self.sys[i].j) * dt ** 2 / 12.)
         for i in range(len(self.sys)):
             self.sys[i].set_p(p0[i] + .5 * (v0[i] + self.sys[i].v) * dt \
-                + (a0[i] - self.sys[i].a) * dt*dt / 12.)
-            break
+                + (a0[i] - self.sys[i].a) * dt ** 2 / 12.)
 
-def simulate(system, dt, t_end, dt_out=-1, dt_dia=-1, show_plot=False):
+def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
     n = 0
-    t =  .5 * dt
-    t_out = dt_out
-    t_dia = dt_dia
-
+    t = 0
+    t_out = dt_out - 0.5 * dt
+    t_dia = dt_dia - 0.5 * dt
     if dt_dia > 0:
-        system.print_energy(0, n)
-
+        system.print_energy(t, n)
     lst = [[x.p for x in system.sys]]
     while t < t_end:
-
         system.step(dt)
         t += dt
         n += 1
-
         if dt_dia > 0 and t >= t_dia:
-            system.print_energy(t_dia, n)
+            system.print_energy(t, n)
             t_dia += dt_dia
-
         if dt_out > 0 and t >= t_out:
             print(system)
             t_out += dt_out
-
         lst.append([x.p for x in system.sys])
+    return [x.T.squeeze() for x in np.split(np.array(lst), 2, axis=1)]
 
-    lst = np.array(lst).T
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "itype", type=str,
+        help="integration type"
+    )
+    parser.add_argument(
+        "t_end", type=float,
+        help="total runtime simulation"
+    )
+    parser.add_argument(
+        "dt", type=float,
+        help="timestep for calculations in simulation"
+    )
+    parser.add_argument(
+        "-d", "--t_dia", type=float, default=-1,
+        help="timestep for energy evaluation output"
+    )
+    parser.add_argument(
+        "-o", "--t_out", type=float, default=-1,
+        help="timestep for body-data output"
+    )
+    parser.add_argument(
+        "-plt", "--plot", action="store_true",
+        help="plot simulation"
+    )
+    args = parser.parse_args()
+    return args.itype.lower(), args.t_end, args.dt, \
+        args.t_dia, args.t_out, args.plot
 
-    if show_plot:
-        simple_plot(lst[0], lst[1], 0)
-
-    return None
-
-def get_params():
-    line_index = 0
-    params = [[]]
+def get_system_data():
+    input_dim = -1
+    b_data = []
+    G = float(sys.stdin.readline().strip())
     for line in sys.stdin:
+        if line[0] == "#":
+            continue
         line_strip = line.strip()
         if line_strip == '':
             break
-        if line_index < 5:
-            params.append(float(line_strip))
-        else:
-            b_params = [float(x) for x in line_strip.split(' ')]
-            params[0].append(
-                Body(b_params[0], b_params[1:4], b_params[4:])
+        b_params = [float(x) for x in line_strip.split()]
+        b_dim, r = divmod(len(b_params[1:]), 2)
+        assert r == 0, "Inconsistent input dimensions"
+        if input_dim < 0: input_dim = b_dim
+        else: assert input_dim == b_dim, "Inconsistent input dimensions"
+        b_data.append(
+            Body(
+                b_params[0],
+                b_params[1:b_dim+1],
+                b_params[b_dim+1:2*b_dim+1]
             )
-        line_index += 1
-    return params
+        )
+    return G, b_data
 
 if __name__ == "__main__":
-    assert len(sys.argv) == 2, "Insufficient amount of arguments"
-    itype = sys.argv[1].lower()
-#    assert itype in [
-#        "euler",
-#        "verlet",
-#        "leapfrog",
-#        "rk2",
-#        "rk4",
-#        "hermite",
-#    ], "Integration type not supported"
-#    if itype == "euler":
-#        ifunc = Integration.euler
-#    elif itype == "verlet" or itype == "leapfrog":
-#        ifunc = Integration.verlet
-#    elif itype == "rk2":
-#        ifunc = Integration.rk2
-#    elif itype == "rk4":
-#        ifunc = Integration.rk4
-#    elif itype == "hermite":
-#        ifunc = Integration.hermite
-    params = get_params()
-    system = System(*params[:2], itype)
-    simulate(system, *params[2:], False)
+    itype, t_end, dt, t_dia, t_out, plot = parse_arguments()
+    G, sys = get_system_data()
+    system = System(G, sys, itype)
+    sim_data = simulate(system, t_end, dt, t_dia, t_out)
+    if plot:
+        simple_plot(sim_data)
 
