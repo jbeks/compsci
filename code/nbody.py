@@ -197,8 +197,10 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
         if dt_out > 0 and t >= t_out:
             print(system)
             t_out += dt_out
-        lst.append([x.p for x in system.sys])
-    return [x.T.squeeze() for x in np.split(np.array(lst), 2, axis=1)]
+        lst.append([b.p for b in system.sys])
+    return [
+        p.squeeze() for p in np.split(np.array(lst), len(system.sys), axis=1)
+    ]
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -260,5 +262,5 @@ if __name__ == "__main__":
     system = System(G, sys, itype)
     sim_data = simulate(system, t_end, dt, t_dia, t_out)
     if plot:
-        simple_plot(sim_data)
+        simple_plot([p.T for p in sim_data])
 
