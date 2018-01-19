@@ -108,15 +108,15 @@ class System:
         print('             E_tot - E_init = ',etot-self.e0)
         print('  (E_tot - E_init) / E_init =', (etot - self.e0) / self.e0)
     def euler(self, dt):
-        for b in self.sys: b.cset_a(self.sys, self.G)#; break
-        for b in self.sys: b.set_p(b.p + b.v * dt)#; break
-        for b in self.sys: b.set_v(b.v + b.a * dt)#; break
+        for b in self.sys: b.cset_a(self.sys, self.G)
+        for b in self.sys: b.set_p(b.p + b.v * dt)
+        for b in self.sys: b.set_v(b.v + b.a * dt)
     def verlet(self, dt):
-        for b in self.sys: b.cset_a(self.sys, self.G)#; break
-        for b in self.sys: b.set_v(b.v + .5 * b.a * dt)#; break
-        for b in self.sys: b.set_p(b.p + b.v * dt)#; break
-        for b in self.sys: b.cset_a(self.sys, self.G)#; break
-        for b in self.sys: b.set_v(b.v + .5 * b.a * dt)#; break
+        for b in self.sys: b.cset_a(self.sys, self.G)
+        for b in self.sys: b.set_v(b.v + .5 * b.a * dt)
+        for b in self.sys: b.set_p(b.p + b.v * dt)
+        for b in self.sys: b.cset_a(self.sys, self.G)
+        for b in self.sys: b.set_v(b.v + .5 * b.a * dt)
     def rk2(self, dt):
         p0 = []
         v0_5 = []
