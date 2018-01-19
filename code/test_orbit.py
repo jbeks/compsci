@@ -3,16 +3,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from nbody import *
 
-def find_dists(data_a, data_b):
-    min_dist = np.linalg.norm(data_b[0] - data_a[0])
+def find_dists(data_body, data_center):
+    min_dist = np.linalg.norm(data_body[0] - data_center[0])
     max_dist = 0
-    for a, b in zip(data_a, data_b):
-        dist = np.linalg.norm(b - a)
+    for d, d0 in zip(data_body, data_center):
+        dist = np.linalg.norm(d - d0)
         if dist < min_dist: min_dist = dist
         if dist > max_dist: max_dist = dist
     return min_dist, max_dist
 
-def find_period(data):
+def find_period(data_body, data_center):
+    data = data_body - data_center
     prev_dist = np.linalg.norm(data[1] - data[0])
     back = False
     for i in range(2, len(data)):
@@ -28,7 +29,7 @@ def find_period(data):
 def evaluation(center, all_other, dt):
     for i in range(len(all_other)):
         mi, ma = find_dists(all_other[i], center)
-        p = find_period(all_other[i]) * dt / 86400.
+        p = find_period(all_other[i], center) * dt / 86400.
         print("Body " + str(i) + ":")
         print("  min dist to center = " + str(mi))
         print("  max dist to center = " + str(ma))
