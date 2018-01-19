@@ -3,21 +3,41 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
+from mpl_toolkits.mplot3d import Axes3D
+
 def simple_plot(data):
     for i in range(len(data)):
-        plt.scatter(data[i][0], data[i][1], c='C'+str(i%9), s=1)
+        plt.plot(data[i][0], data[i][1], c='C'+str(i%9))
+        plt.scatter(data[i][0][len(data[i][0]) - 1], data[i][1][len(data[i][0]) - 1], c='C'+str(i%9), s=10)
+    plt.grid(True)
+    plt.axis("equal")
+    plt.show()
+
+def full_plot(data):
+    fig = plt.figure("Solar System")
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    for i in range(len(data)):
+        ax.plot(data[i][0], data[i][1], data[i][2], c='C'+str(i%9))
+        ax.scatter(data[i][0][len(data[i][0]) - 1], data[i][1][len(data[i][0]) - 1], data[i][2][len(data[i][0]) - 1], c='C'+str(i%9), s=10)
     plt.grid(True)
     plt.axis("equal")
     plt.show()
 
 class Body:
-    def __init__(self, m, p, v):
+    def __init__(self, m, p, v, names):
         self.dim = len(p)
         self.m = float(m)
         self.p = np.array(p)
         self.v = np.array(v)
         self.a = np.zeros(self.dim)
         self.j = np.zeros(self.dim)
+        self.name = names[0]
+        self.parent = names[1]
+    def __str__(self):
+        return self.name
     def __repr__(self):
         s = ""
         s += "mass = " + str(self.m) + "\n"
@@ -186,7 +206,8 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
     t_dia = dt_dia - 0.5 * dt
     if dt_dia > 0:
         system.print_energy(t, n)
-    lst = [[x.p for x in system.sys]]
+    p_lst = [[x.p for x in system.sys]]
+    v_lst = [[x.v for x in system.sys]]
     while t < t_end:
         system.step(dt)
         t += dt
@@ -197,9 +218,12 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
         if dt_out > 0 and t >= t_out:
             print(system)
             t_out += dt_out
-        lst.append([b.p for b in system.sys])
+        p_lst.append([b.p for b in system.sys])
+        v_lst.append([b.v for b in system.sys])
     return [
-        p.squeeze() for p in np.split(np.array(lst), len(system.sys), axis=1)
+        p.squeeze() for p in np.split(np.array(p_lst), len(system.sys), axis=1)
+    ], [
+        v.squeeze() for v in np.split(np.array(v_lst), len(system.sys), axis=1)
     ]
 
 def parse_arguments():
@@ -209,7 +233,7 @@ def parse_arguments():
         help="integration type"
     )
     parser.add_argument(
-        "t_end", type=float,
+        "t_end", type=float, default=0,
         help="total runtime simulation"
     )
     parser.add_argument(
@@ -228,9 +252,17 @@ def parse_arguments():
         "-plt", "--plot", action="store_true",
         help="plot simulation"
     )
+    parser.add_argument(
+        "-p", "--planet", default="Earth",
+        help="planet to calculate"
+    )
+    parser.add_argument(
+        "-y", "--years", default=1,
+        help="years to run for planet"
+    )
     args = parser.parse_args()
     return args.itype.lower(), args.t_end, args.dt, \
-        args.t_dia, args.t_out, args.plot
+        args.t_dia, args.t_out, args.plot, args.planet, args.years
 
 def get_system_data():
     input_dim = -1
@@ -242,7 +274,9 @@ def get_system_data():
         line_strip = line.strip()
         if line_strip == '':
             break
-        b_params = [float(x) for x in line_strip.split()]
+        split = [x for x in line_strip.split()]
+        b_names = [str(x) for x in split[0:2]]
+        b_params = [float(x) for x in split[2:]]
         b_dim, r = divmod(len(b_params[1:]), 2)
         assert r == 0, "Inconsistent input dimensions"
         if input_dim < 0: input_dim = b_dim
@@ -251,7 +285,8 @@ def get_system_data():
             Body(
                 b_params[0],
                 b_params[1:b_dim+1],
-                b_params[b_dim+1:2*b_dim+1]
+                b_params[b_dim+1:2*b_dim+1],
+                b_names
             )
         )
     return G, b_data
@@ -263,4 +298,3 @@ if __name__ == "__main__":
     sim_data = simulate(system, t_end, dt, t_dia, t_out)
     if plot:
         simple_plot([p.T for p in sim_data])
-
