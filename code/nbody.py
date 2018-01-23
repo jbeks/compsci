@@ -1,11 +1,26 @@
-import sys
+import sys as syspy
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-def simple_plot(data):
-    for i in range(len(data)):
-        plt.scatter(data[i][0], data[i][1], c='C'+str(i%9), s=1)
+def simple_plot(data, plt_3d=False):
+    fig = plt.figure()
+    if plt_3d:
+        ax = fig.add_subplot(111, projection="3d")
+        for i in range(len(data)):
+            if syspy.version_info[0] < 3:
+                ax.scatter(
+                    data[i][0], data[i][1], data[i][2], s=1
+                )
+            else:
+                ax.scatter(
+                    data[i][0], data[i][1], data[i][2], c='C'+str(i%9), s=1
+                )
+    else:
+        ax = fig.add_subplot(111)
+        for i in range(len(data)):
+            ax.scatter(data[i][0], data[i][1], c='C'+str(i%9), s=1)
     plt.grid(True)
     plt.axis("equal")
     plt.show()
@@ -70,6 +85,8 @@ class System:
             "leapfrog",
             "rk2",
             "rk4",
+            "rk22",
+            "rk44",
             "hermite",
         ], "Integration type not supported"
         if itype == "euler":
@@ -80,6 +97,10 @@ class System:
             self.ifunc = self.rk2
         elif itype == "rk4":
             self.ifunc = self.rk4
+        elif itype == "rk22":
+            self.ifunc = self.rk22
+        elif itype == "rk44":
+            self.ifunc = self.rk44
         elif itype == "hermite":
             self.ifunc = self.hermite
     def __repr__(self):
@@ -129,6 +150,23 @@ class System:
         for b in self.sys: b.set_v(b.v + b.a * dt)
         for i in range(len(self.sys)):
             self.sys[i].set_p(p0[i] + v0_5[i] * dt)
+    def rk22(self, dt):
+        p0 = []
+        v0 = []
+        for b in self.sys:
+            p0.append(b.p)
+            v0.append(b.v)
+            b.cset_a(self.sys, self.G)
+        for b in self.sys:
+            b.set_p(b.p + .5 * b.v * dt)
+            b.set_v(b.v + .5 * b.a * dt)
+        for b in self.sys:
+            b.cset_a(self.sys, self.G)
+        for i in range(len(self.sys)):
+            b = self.sys[i]
+            b.set_p(p0[i] + b.v * dt)
+            b.set_v(v0[i] + b.a * dt)
+    # Handbook of Mathematical Functions, by M. Abramowitz and I. A. Stegun, eds. [Dover, 1965] (25.5.22)
     def rk4(self, dt):
         p0 = []
         k1 = []
@@ -153,6 +191,34 @@ class System:
             self.sys[i].set_p(p0[i] + self.sys[i].v * dt \
                 + (k1[i] + 2 * k2[i]) * dt / 6.)
             self.sys[i].set_v(self.sys[i].v + (k1[i] + 4 * k2[i] + k3[i]) / 6.)
+    def rk44(self, dt):
+        p0 = []
+        k1 = []
+        k2 = []
+        k3 = []
+        for b in self.sys:
+            p0.append(b.p)
+            b.cset_a(self.sys, self.G)
+            k1.append(b.a * dt)
+        for i in range(len(self.sys)):
+            b = self.sys[i]
+            v = b.v + .25 * k1[i]
+            b.set_p(p0[i] + .5 * v * dt)
+        for b in self.sys:
+            b.cset_a(self.sys, self.G)
+            k2.append(b.a * dt)
+        for i in range(len(self.sys)):
+            b = self.sys[i]
+            v = b.v + .5 * k2[i]
+            b.set_p(p0[i] + v * dt)
+        for b in self.sys:
+            b.cset_a(self.sys, self.G)
+            k3.append(b.a * dt)
+        for i in range(len(self.sys)):
+            b = self.sys[i]
+            v = b.v + .5 * (k1[i] + 2 * k2[i]) / 3.
+            b.set_p(p0[i] + v * dt)
+            b.set_v(b.v + (k1[i] + 4 * k2[i] + k3[i]) / 6.)
     def hermite(self, dt):
         p0 = []
         v0 = []
@@ -228,15 +294,19 @@ def parse_arguments():
         "-plt", "--plot", action="store_true",
         help="plot simulation"
     )
+    parser.add_argument(
+        "-plt_3d", "--plot_3d", action="store_true",
+        help="plot simulation in 3 dimensions"
+    )
     args = parser.parse_args()
     return args.itype.lower(), args.t_end, args.dt, \
-        args.t_dia, args.t_out, args.plot
+        args.t_dia, args.t_out, args.plot, args.plot_3d
 
 def get_system_data():
     input_dim = -1
     b_data = []
-    G = float(sys.stdin.readline().strip())
-    for line in sys.stdin:
+    G = float(syspy.stdin.readline().strip())
+    for line in syspy.stdin:
         if line[0] == "#":
             continue
         line_strip = line.strip()
@@ -257,10 +327,10 @@ def get_system_data():
     return G, b_data
 
 if __name__ == "__main__":
-    itype, t_end, dt, t_dia, t_out, plot = parse_arguments()
+    itype, t_end, dt, t_dia, t_out, plot, plt_3d = parse_arguments()
     G, sys = get_system_data()
     system = System(G, sys, itype)
     sim_data = simulate(system, t_end, dt, t_dia, t_out)
-    if plot:
-        simple_plot([p.T for p in sim_data])
+    if plot or plt_3d:
+        simple_plot([p.T for p in sim_data], plt_3d)
 
