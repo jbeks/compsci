@@ -21,7 +21,8 @@ def full_plot(data):
     ax.set_zlabel("z")
     for i in range(len(data)):
         ax.plot(data[i][0], data[i][1], data[i][2], c='C'+str(i%9))
-        ax.scatter(data[i][0][len(data[i][0]) - 1], data[i][1][len(data[i][0]) - 1], data[i][2][len(data[i][0]) - 1], c='C'+str(i%9), s=10)
+        ax.scatter(data[i][0][len(data[i][0]) - 1], data[i][1][len(data[i][0]) - 1], data[i][2][len(data[i][0]) - 1], c='C'+str(i%9), s=10, )
+    ax.scatter([0], [0], [0], s=100, marker=(5, 1))
     plt.grid(True)
     plt.axis("equal")
     plt.show()
@@ -123,10 +124,14 @@ class System:
         ek = self.get_ek()
         ep = self.get_ep()
         etot = ek + ep
-        print('at time t =',t,', after',n,'steps :')
-        print('  E_kin =',ek,', E_pot =',ep,', E_tot =',etot)
-        print('             E_tot - E_init = ',etot-self.e0)
-        print('  (E_tot - E_init) / E_init =', (etot - self.e0) / self.e0)
+        print('t', t)
+        print('s', n)
+        print('E_kin', ek)
+        print('E_pot', ep)
+        print('E_tot', etot)
+        print()
+        # print('             E_tot - E_init = ',etot-self.e0)
+        # print('  (E_tot - E_init) / E_init =', (etot - self.e0) / self.e0)
     def euler(self, dt):
         for b in self.sys: b.cset_a(self.sys, self.G)
         for b in self.sys: b.set_p(b.p + b.v * dt)
@@ -233,7 +238,7 @@ def parse_arguments():
         help="integration type"
     )
     parser.add_argument(
-        "t_end", type=float, default=0,
+        "t_end", type=float, default=1,
         help="total runtime simulation"
     )
     parser.add_argument(
@@ -253,6 +258,10 @@ def parse_arguments():
         help="plot simulation"
     )
     parser.add_argument(
+        "-s", "--save", default=None,
+        help="filename to save to"
+    )
+    parser.add_argument(
         "-p", "--planet", default="Earth",
         help="planet to calculate"
     )
@@ -262,7 +271,7 @@ def parse_arguments():
     )
     args = parser.parse_args()
     return args.itype.lower(), args.t_end, args.dt, \
-        args.t_dia, args.t_out, args.plot, args.planet, args.years
+        args.t_dia, args.t_out, args.plot, args.save, args.planet, args.years
 
 def get_system_data():
     input_dim = -1
