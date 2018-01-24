@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import system_interpolation as cmod
 
 def simple_plot(data, plt_3d=False):
     fig = plt.figure()
@@ -74,11 +75,10 @@ class Body:
         self.j *= G
 
 class System:
-    def __init__(self, G, sys, itype):
+    def __init__(self, G, sys, itype, cmod=False):
         self.G = G
         self.sys = sys
         self.e0 = self.get_ek() + self.get_ep()
-        self.ifunc = None
         assert itype in [
             "euler",
             "verlet",
@@ -89,27 +89,37 @@ class System:
             "rk44",
             "hermite",
         ], "Integration type not supported"
-        if itype == "euler":
-            self.ifunc = self.euler
-        elif itype == "verlet" or itype == "leapfrog":
-            self.ifunc = self.verlet
-        elif itype == "rk2":
-            self.ifunc = self.rk2
-        elif itype == "rk4":
-            self.ifunc = self.rk4
-        elif itype == "rk22":
-            self.ifunc = self.rk22
-        elif itype == "rk44":
-            self.ifunc = self.rk44
-        elif itype == "hermite":
-            self.ifunc = self.hermite
+        self.itype = itype
+        self.cmod = cmod
     def __repr__(self):
         s = ""
         for b in self.sys:
             s += str(b) + "\n"
         return s[:-1]
     def step(self, dt):
-        self.ifunc(dt)
+        if self.cmod:
+            sys_list = [[b.m, list(b.p), list(b.v)] for b in self.sys]
+            pos, vel = cmod.interpolate(self.itype, dt, self.G, sys_list)
+            assert len(pos) == len(self.sys) and len(vel) == len(self.sys), \
+                "Insufficient interpolation output"
+            for i in range(len(self.sys)):
+                self.sys[i].p = pos[i]
+                self.sys[i].v = vel[i]
+        else:
+            if self.itype == "euler":
+                self.euler(dt)
+            elif self.itype == "verlet" or itype == "leapfrog":
+                self.verlet(dt)
+            elif self.itype == "rk2":
+                self.rk2(dt)
+            elif self.itype == "rk4":
+                self.rk4(dt)
+            elif self.itype == "rk22":
+                self.rk22(dt)
+            elif self.itype == "rk44":
+                self.rk44(dt)
+            elif self.itype == "hermite":
+                self.hermite(dt)
     def get_ek(self):
         ek = 0
         for b in self.sys:
@@ -241,7 +251,6 @@ class System:
         for i in range(len(self.sys)):
             self.sys[i].set_v(v0[i] + .5 * (a0[i] + self.sys[i].a) * dt \
                 + (j0[i] - self.sys[i].j) * dt ** 2 / 12.)
-        for i in range(len(self.sys)):
             self.sys[i].set_p(p0[i] + .5 * (v0[i] + self.sys[i].v) * dt \
                 + (a0[i] - self.sys[i].a) * dt ** 2 / 12.)
 
@@ -250,6 +259,8 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
     t = 0
     t_out = dt_out - 0.5 * dt
     t_dia = dt_dia - 0.5 * dt
+    if dt_out > 0:
+        print(system)
     if dt_dia > 0:
         system.print_energy(t, n)
     lst = [[x.p for x in system.sys]]
@@ -298,9 +309,13 @@ def parse_arguments():
         "-plt_3d", "--plot_3d", action="store_true",
         help="plot simulation in 3 dimensions"
     )
+    parser.add_argument(
+        "-c", "--use_cmod", action="store_true",
+        help="use c-module for interpolation"
+    )
     args = parser.parse_args()
     return args.itype.lower(), args.t_end, args.dt, \
-        args.t_dia, args.t_out, args.plot, args.plot_3d
+        args.t_dia, args.t_out, args.plot, args.plot_3d, args.use_cmod
 
 def get_system_data():
     input_dim = -1
@@ -327,9 +342,9 @@ def get_system_data():
     return G, b_data
 
 if __name__ == "__main__":
-    itype, t_end, dt, t_dia, t_out, plot, plt_3d = parse_arguments()
+    itype, t_end, dt, t_dia, t_out, plot, plt_3d, use_cmod = parse_arguments()
     G, sys = get_system_data()
-    system = System(G, sys, itype)
+    system = System(G, sys, itype, use_cmod)
     sim_data = simulate(system, t_end, dt, t_dia, t_out)
     if plot or plt_3d:
         simple_plot([p.T for p in sim_data], plt_3d)
