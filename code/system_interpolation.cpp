@@ -1,5 +1,4 @@
 #include <Python.h>
-#include <iostream>
 #include <vector>
 #include <myVector.h>
 #include <math.h>
@@ -151,29 +150,6 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_Exception, "Unsupported integration type.");
         return NULL;
     }
-
-/*
-    cout << "mass:" << endl;
-    for (unsigned int i = 0; i < mass.size(); i++) {
-        cout << "  " << mass[i] << endl;
-    }
-    cout << "pos:" << endl;
-    for (unsigned int i = 0; i < pos.size(); i++) {
-        cout << "  ";
-        for (unsigned int j =0; j < pos[i].size(); j++) {
-            cout << pos[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << "vel:" << endl;
-    for (unsigned int i = 0; i < vel.size(); i++) {
-        cout << "  ";
-        for (unsigned int j =0; j < vel[i].size(); j++) {
-            cout << vel[i][j] << " ";
-        }
-        cout << endl;
-    }
-*/
     PyObject *pos_lst = PyList_New(0);
     for (unsigned int i = 0; i < pos.size(); i++) {
         vector<double> vec = pos[i].get();
