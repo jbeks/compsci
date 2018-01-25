@@ -59,9 +59,14 @@ def orbit_type(a):
     return "equal" if same else "divergent"
 
 def make_plot(data, dt_i):
-    plt.plot(dt_i, [np.mean(line) for line in data])
-    plt.plot(dt_i, [np.amax(line) for line in data])
-    plt.plot(dt_i, [np.amin(line) for line in data])
+    # print(ap)
+    for i in range(len(data)):
+        x = np.linspace(0, 176, len(data[i]))
+        plt.plot(x, data[i], label=str("line: " + str(dt_i[i])), c='C'+str(i%9))
+        # t = np.linspace(0, 176, len(ap[i]))
+        # plt.scatter([(x[0] * dt_i[i]) / (60 * 60 * 24) for x in ap[i]], t, c='C'+str(i%9))
+        # plt.scatter([(x[1] * dt_i[i]) / (60 * 60 * 24) for x in ap[i]], t, c='C'+str(i%9))
+    plt.legend(['dt = 100', 'dt = 300', 'dt = 500', 'dt = 700', 'dt = 1000', 'dt = 2000', 'dt = 3000', 'dt = 4000'])
     plt.grid(True)
     plt.show()
 
@@ -78,11 +83,11 @@ def read_ref(name):
     return data, stepsize
 
 def test_ref(data, v_data, body, dt):
-    if body != "Mercury":
+    if body != "Phobos":
         return []
     ref_data, stepsize = read_ref(body.lower())
     plot = []
-    if body == "Mercury":
+    if body == "Phobos":
         for index in range(len(data)):
             if (index * dt) % stepsize == 0:
                 print("DAY: " + str(int((index * dt) / (60 * 60 * 24))))
@@ -91,11 +96,32 @@ def test_ref(data, v_data, body, dt):
                 point = np.linalg.norm(np.array(ref_data)[int((index * dt) / stepsize)] - np.array(data)[index])
                 print(point)
                 plot.append(point)
+                print()
     return plot
+
+def apoperi(data_body, data_center, orbit_i):
+    print(orbit_i)
+    dists = []
+    for start, end in zip(orbit_i[:-1], orbit_i[1:]):
+        min_dist = np.linalg.norm(data_body[start] - data_center[start])
+        max_dist = 0
+        min_i = max_i = -1
+        for i, (d, d0) in enumerate(zip(data_body[start:end], data_center[start:end])):
+            dist = np.linalg.norm(d - d0)
+            if dist < min_dist:
+                min_dist = dist
+                min_i = i
+            if dist > max_dist:
+                max_dist = dist
+                max_i = i
+        dists.append([min_i, max_i])
+    return dists
+
 
 def evaluation(data, v_data, dt, system):
     find = lambda x: next((i for i in range(len(system)) if system[i].name == x.parent), None)
     ref_check_m = []
+    point_m = []
     for i in range(len(data)):
         body = system[i]
         print("b" + str(i))
@@ -108,35 +134,40 @@ def evaluation(data, v_data, dt, system):
             print("apoapsis " + str(ma))
             orbit_i, points, diff = orbit_data(data[i], data[p_index])
             print("orbit " + str(len(points) - 1))
-            if len(points) - 1 > 0:
-                print("avg " + str(np.mean(diff) * dt / 86400.))
-                print("max " + str(max(diff) * dt / 86400.))
-                print("min " + str(min(diff) * dt / 86400.))
-                print("type " + orbit_type(diff))
-                p_err = p_error(data[i], data[p_index], orbit_i)
-                print("p_err " + str(p_err))
-                v_err = v_error(v_data[i], orbit_i)
-                print("v_err " + str(v_err))
-        else:
-            v_ch = v_change(v_data[i])
-            print("v_change ")
-            print(v_ch)
+        #     if len(points) - 1 > 0:
+        #         print("avg " + str(np.mean(diff) * dt / 86400.))
+        #         print("max " + str(max(diff) * dt / 86400.))
+        #         print("min " + str(min(diff) * dt / 86400.))
+        #         print("type " + orbit_type(diff))
+        #         p_err = p_error(data[i], data[p_index], orbit_i)
+        #         print("p_err " + str(p_err))
+        #         v_err = v_error(v_data[i], orbit_i)
+        #         print("v_err " + str(v_err))
+        # else:
+        #     v_ch = v_change(v_data[i])
+        #     print("v_change ")
+        #     print(v_ch)
         ref_check = test_ref(data[i], v_data[i], body.name, dt)
-        print("ref-check " + str(ref_check))
-        print()
+        # print("ref-check " + str(ref_check))
+        # print()
         if ref_check != []:
             ref_check_m = ref_check
-    return ref_check_m
+        if i == 5:
+            point_m = points
+    return ref_check_m, point_m
 
 if __name__ == "__main__":
-    orbit = {'Mercury': 87.97, 'Venus': 224.70, 'Earth': 365.25, 'Moon': 27.32, 'Mars': 686.98, 'Phobos': 0.3189}
-    time = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    orbit = {'day': 1, 'Mercury': 87.97, 'Venus': 224.70, 'Earth': 365.25, 'Moon': 27.32, 'Mars': 686.98, 'Phobos': 0.3189}
+    time = [100, 300, 500, 700, 1000, 2000, 3000, 4000] #, 6000, 8000, 10000]
     itype, t_end, dt, t_dia, t_out, plot, save, planet, years = parse_arguments()
+    if save or plot:
+        print("Sorry, we don't do saving and/or plotting...")
     if t_end == 1:
         t_end = int(years) * orbit[planet] * 24 * 60 * 60
     dt_i = time[:int(dt)]
-    G, sys = get_system_data()
     plots = []
+    ap = []
+    G, sys = get_system_data()
     for dt in dt_i:
         system = System(G, sys, itype)
         print("itype " + itype)
@@ -146,8 +177,10 @@ if __name__ == "__main__":
         print("E_init " + str(system.e0))
         print()
         sim_data, v_data = simulate(system, t_end, dt, t_dia, t_out)
-        dt_data = evaluation(sim_data, v_data, dt, system.sys)
+        dt_data, orbit_i = evaluation(sim_data, v_data, dt, system.sys)
+        # ap.append(apoperi(sim_data[1], sim_data[0], orbit_i))
         plots.append(dt_data)
+        G, sys = get_system_data(True)
     make_plot(plots, dt_i)
     if save:
         f = open(save + ".npy", 'wb')
