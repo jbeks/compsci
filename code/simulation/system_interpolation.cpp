@@ -130,11 +130,10 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
             }
         }
     }
-
     if (!strcmp(itype, "euler")) {
         euler(dt, G, mass, pos, vel);
     }
-    else if (!strcmp(itype, "verlet") or !strcmp(itype, "leapfrog")) {
+    else if (!strcmp(itype, "verlet") || !strcmp(itype, "leapfrog")) {
         verlet(dt, G, mass, pos, vel);
     }
     else if (!strcmp(itype, "rk2")) {

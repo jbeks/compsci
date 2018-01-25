@@ -1,3 +1,4 @@
+import simulation_dir
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,11 +37,11 @@ def evaluation(center, all_other, dt):
         print("  period of orbit    = " + str(p) + " (days)")
 
 if __name__ == "__main__":
-    itype, t_end, dt, t_dia, t_out, plot = parse_arguments()
+    itype, t_end, dt, t_dia, t_out, p2d, p3d = parse_arguments()
     G, sys = get_system_data()
     system = System(G, sys, itype)
     sim_data = simulate(system, t_end, dt, t_dia, t_out)
     evaluation(sim_data[0], sim_data[1:], dt)
-    if plot:
-        simple_plot([p.T for p in sim_data])
+    if p2d or p3d:
+        simple_plot([p.T for p in sim_data], p3d)
 
