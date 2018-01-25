@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import system_interpolation as cmod
 
-def simple_plot(data, plt_3d=False):
+def simple_plot(data, plt_3d=False, n_points=-1):
+    if n_points >= 0 and n_points < len(data[0][0]):
+        data = [[dim[::(len(dim)//n_points)] for dim in b] for b in data]
     fig = plt.figure()
     if plt_3d:
         ax = fig.add_subplot(111, projection="3d")
@@ -144,10 +146,14 @@ def parse_arguments():
         "-p3d", "--plot_3d", action="store_true",
         help="plot simulation in 3 dimensions"
     )
+    parser.add_argument(
+        "-np", "--n_points", type=int, default=-1,
+        help="maximum amount of points plotted"
+    )
     args = parser.parse_args()
     return (
         args.itype.lower(), args.t_end, args.dt,
-        args.t_dia, args.t_out, args.plot_2d, args.plot_3d
+        args.t_dia, args.t_out, args.plot_2d, args.plot_3d, args.n_points
     )
 
 def get_system_data():
@@ -175,10 +181,10 @@ def get_system_data():
     return G, b_data
 
 if __name__ == "__main__":
-    itype, t_end, dt, t_dia, t_out, p2d, p3d = parse_arguments()
+    args = parse_arguments()
     G, sys = get_system_data()
-    system = System(G, sys, itype)
-    sim_data = simulate(system, t_end, dt, t_dia, t_out)
-    if p2d or p3d:
-        simple_plot([p.T for p in sim_data], p3d)
+    system = System(G, sys, args[0])
+    sim_data = simulate(system, *args[1:5])
+    if args[5] or args[6]:
+        simple_plot([p.T for p in sim_data], args[6], args[7])
 
