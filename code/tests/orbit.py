@@ -37,11 +37,13 @@ def evaluation(center, all_other, dt):
         print("  period of orbit    = " + str(p) + " (days)")
 
 if __name__ == "__main__":
-    args = parse_arguments()
+    parser = argparse.ArgumentParser()
+    set_parser(parser)
+    args = parser.parse_args()
     G, sys = get_system_data()
-    system = System(G, sys, args[0])
-    sim_data = simulate(system, *args[1:5])
-    evaluation(sim_data[0], sim_data[1:], args[2])
-    if args[5] or args[6]:
-        simple_plot([p.T for p in sim_data], args[6], args[7])
+    system = System(G, sys, args.itype.lower())
+    sim_data = simulate(system, args.t_end, args.dt, args.t_dia, args.t_out)
+    evaluation(sim_data[0], sim_data[1:], args.dt)
+    if args.plot_2d or args.plot_3d:
+        simple_plot([p.T for p in sim_data], args.plot_3d, args.n_points)
 

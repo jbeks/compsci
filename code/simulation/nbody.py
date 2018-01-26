@@ -128,8 +128,7 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
         p.squeeze() for p in np.split(np.array(lst), len(system.sys), axis=1)
     ]
 
-def parse_arguments():
-    parser = argparse.ArgumentParser()
+def set_parser(parser):
     parser.add_argument(
         "itype", type=str,
         help="integration type"
@@ -162,11 +161,6 @@ def parse_arguments():
         "-np", "--n_points", type=int, default=-1,
         help="maximum amount of points plotted"
     )
-    args = parser.parse_args()
-    return (
-        args.itype.lower(), args.t_end, args.dt,
-        args.t_dia, args.t_out, args.plot_2d, args.plot_3d, args.n_points
-    )
 
 def get_system_data():
     input_dim = -1
@@ -193,10 +187,12 @@ def get_system_data():
     return G, b_data
 
 if __name__ == "__main__":
-    args = parse_arguments()
+    parser = argparse.ArgumentParser()
+    set_parser(parser)
+    args = parser.parse_args()
     G, sys = get_system_data()
-    system = System(G, sys, args[0])
-    sim_data = simulate(system, *args[1:5])
-    if args[5] or args[6]:
-        simple_plot([p.T for p in sim_data], args[6], args[7])
+    system = System(G, sys, args.itype.lower())
+    sim_data = simulate(system, args.t_end, args.dt, args.t_dia, args.t_out)
+    if args.plot_2d or args.plot_3d:
+        simple_plot([p.T for p in sim_data], args.plot_3d, args.n_points)
 
