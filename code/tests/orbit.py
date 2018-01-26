@@ -1,8 +1,11 @@
-import code_dir
 import sys
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+
+import code_dir
 from nbody import *
+
 
 def find_dists(data_body, data_center):
     min_dist = np.linalg.norm(data_body[0] - data_center[0])
