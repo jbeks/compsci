@@ -27,16 +27,13 @@ if __name__ == "__main__":
     set_parser(parser)
     set_parser_bh(parser)
     args = parser.parse_args()
+
     G, sys = get_system_data()
     system = System(G, sys, args.itype.lower())
-    sim_data = simulate(system, args.t_end, args.dt, args.t_dia, args.t_out)
+
+#    sim_data_orig = simulate(system, args.t_end, args.dt, args.t_dia, args.t_out)
 
     sim_data = simulate_bh(args.dist, args.speed, args, G, sys)
     if args.plot_2d or args.plot_3d:
         simple_plot([p.T for p in sim_data], args.plot_3d, args.n_points)
-#        simple_plot(
-#            [p.T for p in list(np.array(sim_data[:-1]) \
-#                - np.array(sim_data_orig)) + sim_data[:-1]],
-#            args.plot_3d, args.n_points
-#        )
 
