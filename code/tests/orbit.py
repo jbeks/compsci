@@ -1,4 +1,4 @@
-import simulation_dir
+import code_dir
 import sys
 import numpy as np
 import matplotlib.pyplot as plt

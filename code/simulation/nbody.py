@@ -12,18 +12,16 @@ def simple_plot(data, plt_3d=False, n_points=-1):
     if plt_3d:
         ax = fig.add_subplot(111, projection="3d")
         for i in range(len(data)):
-            if syspy.version_info[0] < 3:
-                ax.scatter(
-                    data[i][0], data[i][1], data[i][2], s=1
-                )
-            else:
-                ax.scatter(
-                    data[i][0], data[i][1], data[i][2], c='C'+str(i%9), s=1
-                )
+            ax.scatter(data[i][0], data[i][1], data[i][2], c='C'+str(i%9), s=1)
+            ax.scatter(
+                data[i][0][-1], data[i][1][-1], data[i][2][-1],
+                c='C'+str(i%9), s=17.5
+            )
     else:
         ax = fig.add_subplot(111)
         for i in range(len(data)):
             ax.scatter(data[i][0], data[i][1], c='C'+str(i%9), s=1)
+            ax.scatter(data[i][0][-1], data[i][1][-1], c='C'+str(i%9), s=17.5)
     plt.grid(True)
     plt.axis("equal")
     plt.show()
@@ -32,13 +30,13 @@ class Body:
     def __init__(self, m, p, v):
         self.dim = len(p)
         self.m = float(m)
-        self.p = np.array(p)
-        self.v = np.array(v)
-    def __repr__(self):
+        self.p = np.array(p, dtype=float)
+        self.v = np.array(v, dtype=float)
+    def to_string(self):
         s = ""
-        s += "mass = " + str(self.m) + "\n"
-        s += " pos = " + " ".join([str(x) for x in self.p]) + "\n"
-        s += " vel = " + " ".join([str(x) for x in self.v])
+        s += str(self.m) + "\n"
+        s += " ".join([str(x) for x in self.p]) + "\n"
+        s += " ".join([str(x) for x in self.v])
         return s
     def get_ek(self):
         return .5 * self.m * np.linalg.norm(self.v) ** 2
@@ -58,10 +56,10 @@ class System:
         self.sys = sys
         self.e0 = self.get_ek() + self.get_ep()
         self.itype = itype
-    def __repr__(self):
+    def to_string(self):
         s = ""
         for b in self.sys:
-            s += str(b) + "\n"
+            s += b.to_string() + "\n"
         return s[:-1]
     def step(self, dt):
         sys_list = [[b.m, list(b.p), list(b.v)] for b in self.sys]
@@ -86,10 +84,20 @@ class System:
         ek = self.get_ek()
         ep = self.get_ep()
         etot = ek + ep
-        print('at time t =',t,', after',n,'steps :')
-        print('  E_kin =',ek,', E_pot =',ep,', E_tot =',etot)
-        print('             E_tot - E_init = ',etot-self.e0)
-        print('  (E_tot - E_init) / E_init =', (etot - self.e0) / self.e0)
+        syspy.stdout.write(
+            "at time t = " + str(t) + ", after " + str(n) + " steps :\n"
+        )
+        syspy.stdout.write(
+            "  E_kin = " + str(ek) + ", E_pot = " + str(ep) + \
+            ", E_tot = " + str(etot) + "\n"
+        )
+        syspy.stdout.write(
+            "             E_tot - E_init = " + str(etot-self.e0) + "\n"
+        )
+        syspy.stdout.write(
+            "  (E_tot - E_init) / E_init =  " + \
+            str((etot - self.e0) / self.e0) + "\n"
+        )
 
 def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
     n = 0
@@ -97,7 +105,9 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
     t_out = dt_out - 0.5 * dt
     t_dia = dt_dia - 0.5 * dt
     if dt_out > 0:
-        print(system)
+        syspy.stdout.write(str(t) + "\n")
+        for l in system.to_string().split("\n"):
+            syspy.stdout.write(l + "\n")
     if dt_dia > 0:
         system.print_energy(t, n)
     lst = [[x.p for x in system.sys]]
@@ -109,7 +119,9 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
             system.print_energy(t, n)
             t_dia += dt_dia
         if dt_out > 0 and t >= t_out:
-            print(system)
+            syspy.stdout.write(str(t) + "\n")
+            for l in system.to_string().split("\n"):
+                syspy.stdout.write(l + "\n")
             t_out += dt_out
         lst.append([b.p for b in system.sys])
     return [
