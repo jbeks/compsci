@@ -163,11 +163,13 @@ def set_parser(parser):
         help="maximum amount of points plotted"
     )
 
-def get_system_data():
+def get_system_data(f=None):
     input_dim = -1
     b_data = []
-    G = float(syspy.stdin.readline().strip())
-    for line in syspy.stdin:
+    if not f:
+        f = syspy.stdin
+    G = float(f.readline().strip())
+    for line in f:
         if line[0] == "#":
             continue
         line_strip = line.strip()
@@ -196,4 +198,3 @@ if __name__ == "__main__":
     sim_data = simulate(system, args.t_end, args.dt, args.t_dia, args.t_out)
     if args.plot_2d or args.plot_3d:
         simple_plot([p.T for p in sim_data], args.plot_3d, args.n_points)
-
