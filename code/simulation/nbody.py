@@ -57,6 +57,7 @@ class System:
         self.sys = sys
         self.e0 = self.get_ek() + self.get_ep()
         self.itype = itype
+        self.e_diff = []
     def to_string(self):
         s = ""
         for b in self.sys:
@@ -81,26 +82,41 @@ class System:
         for b in self.sys:
             ep += b.get_ep(self.sys, self.G)
         return 0.5 * ep
-    def print_energy(self, t, n):
+    def print_energy(self, t, n, verbose=True):
         ek = self.get_ek()
         ep = self.get_ep()
         etot = ek + ep
-        syspy.stdout.write(
-            "at time t = " + str(t) + ", after " + str(n) + " steps :\n"
-        )
-        syspy.stdout.write(
-            "  E_kin = " + str(ek) + ", E_pot = " + str(ep) + \
-            ", E_tot = " + str(etot) + "\n"
-        )
-        syspy.stdout.write(
-            "             E_tot - E_init = " + str(etot-self.e0) + "\n"
-        )
-        syspy.stdout.write(
-            "  (E_tot - E_init) / E_init =  " + \
-            str((etot - self.e0) / self.e0) + "\n"
-        )
+        if verbose:
+            syspy.stdout.write(
+                "at time t = " + str(t) + ", after " + str(n) + " steps :\n"
+            )
+            syspy.stdout.write(
+                "  E_kin = " + str(ek) + ", E_pot = " + str(ep) + \
+                ", E_tot = " + str(etot) + "\n"
+            )
+            syspy.stdout.write(
+                "             E_tot - E_init = " + str(etot-self.e0) + "\n"
+            )
+            syspy.stdout.write(
+                "  (E_tot - E_init) / E_init =  " + \
+                str((etot - self.e0) / self.e0) + "\n"
+            )
+        else:
+            syspy.stdout.write(
+                "t " + str(t) + "\n" + \
+                "steps " + str(n) + "\n"
+            )
+            syspy.stdout.write(
+                "E_kin " + str(ek) + "\n" + \
+                "E_pot " + str(ep) + "\n" + \
+                "E_tot " + str(etot) + "\n"
+            )
+            syspy.stdout.write(
+                "E_diff " + str(etot - self.e0) + "\n\n"
+            )
+            self.e_diff.append(etot-self.e0)
 
-def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
+def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1, verbose=True):
     n = 0
     t = 0
     t_out = dt_out - 0.5 * dt
@@ -110,14 +126,14 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1):
         for l in system.to_string().split("\n"):
             syspy.stdout.write(l + "\n")
     if dt_dia > 0:
-        system.print_energy(t, n)
+        system.print_energy(t, n, verbose)
     lst = [[x.p for x in system.sys]]
     while t < t_end:
         system.step(dt)
         t += dt
         n += 1
         if dt_dia > 0 and t >= t_dia:
-            system.print_energy(t, n)
+            system.print_energy(t, n, verbose)
             t_dia += dt_dia
         if dt_out > 0 and t >= t_out:
             syspy.stdout.write(str(t) + "\n")
