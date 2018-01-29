@@ -57,13 +57,15 @@ def evaluation(data, dt, system):
 def plot_diff(data, methods, t_end):
     # http://akuederle.com/matplotlib-zoomed-up-inset
 
-    t_energy = np.linspace(0, t_end, len(data[3][0]))
-    t_refcheck = np.linspace(0, t_end, len(data[3][1][0]))
+    t_energy = np.linspace(0, t_end, len(data[0][0]))
+    t_refcheck = np.linspace(0, t_end, len(data[0][1][0]))
 
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
 
     ax1.set_xlabel('time (s)')
+    ax1.set_xlim(0, 2.2e9)
+    # ax1.set_ylim()
     ax1.set_ylabel('ref error')
     ax2.set_ylabel('energy error')
 
@@ -71,26 +73,28 @@ def plot_diff(data, methods, t_end):
     for i in range(len(methods)):
         line, = ax1.plot(t_refcheck, data[i][1][0], c='C'+str(i % len(methods)), linestyle="-")
         lines1.append(line)
-    ax1.legend(lines1, methods, loc=1)
+    ax1.legend(lines1, methods, bbox_to_anchor=(1,0), loc="lower right",
+                bbox_transform=fig.transFigure, ncol=5)
 
     lines2 = []
-    for i in range(1, len(methods)):
+    start = 2 if len(methods) > 1 else 0
+    for i in range(2, len(methods)):
         line, = ax2.plot(t_energy, data[i][0], c='C'+str(i % len(methods)), linestyle="-.")
         lines2.append(line)
-    ax2.legend(lines2, methods[1:], loc=3)
+    ax2.legend(lines2, methods[2:], loc=2)
 
     plt.grid(True)
 
-    axins = zoomed_inset_axes(ax1, 5000, loc=2)
+    axins = zoomed_inset_axes(ax1, (2e8 / 2.3e4), loc=1)
     for i in range(len(methods)):
         line, = axins.plot(t_refcheck, data[i][1][0], c='C'+str(i % len(methods)), linestyle="-")
-    x1, x2, y1, y2 = (1.576e9 + 760000), (1.576e9 + 840000), 1.99585e7, 1.9961e7
+    x1, x2, y1, y2 = (1.576e9 + 780000), (1.576e9 + 820000), 1.99587e7, 1.9961e7
     axins.set_xlim(x1, x2)
     axins.set_ylim(y1, y2)
-    plt.yticks(visible=False)
+    # plt.yticks(visible=False)
     plt.xticks(visible=False)
 
-    mark_inset(ax1, axins, loc1=1, loc2=4, fc="none", ec="0.5")
+    mark_inset(ax1, axins, loc1=2, loc2=3, fc="none", ec="0.5")
 
     plt.grid(True)
     plt.show()
@@ -107,7 +111,7 @@ if __name__ == "__main__":
         shutil.copyfileobj(sys.stdin, f)
 
     # check if we need to test just one or all of the methods
-    methods = ["euler", "verlet", "rk4", "hermite"]
+    methods = ["euler", "rk2", "verlet", "rk4", "hermite"]
     if args.itype.lower() != "all":
         methods = [args.itype.lower()]
 
