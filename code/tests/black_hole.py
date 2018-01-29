@@ -18,8 +18,8 @@ def set_parser_bh(parser):
 
 def simulate_bh(dist, speed, args, G, sys):
     start_dist = 5*dist
-    e1 = np.array([1,-1,0], dtype=float)
-    e2 = np.array([1,1,0], dtype=float)
+    e1 = np.array([0,1,0], dtype=float)
+    e2 = np.array([0,0,1], dtype=float)
 
     e1 /= np.linalg.norm(e1)
     e2 /= np.linalg.norm(e2)
@@ -34,6 +34,7 @@ def simulate_bh(dist, speed, args, G, sys):
         6.5 * sun_m,                                    # stellar black hole
         bh_p,
         bh_v,
+        ("Black_Hole", "NONE")
     )
 
     system = System(G, sys+[bh], args.itype.lower())

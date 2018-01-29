@@ -19,8 +19,8 @@ OUTDIRNAME="output"
 SCRIPTDIR="code"$SEP"tests"
 SCRIPTNAME="black_hole.py"
 
-FILEDIR=$(readlink -f $0)
-ROOTDIR=$(dirname $(dirname $(dirname $FILEDIR)))
+FILEDIR=$(dirname $(readlink -f $0))
+ROOTDIR=$(dirname $(dirname $FILEDIR))
 
 SCRIPT=$ROOTDIR$SEP$SCRIPTDIR$SEP$SCRIPTNAME
 INFILE=$ROOTDIR$SEP$INDIRNAME$SEP$INNAME
