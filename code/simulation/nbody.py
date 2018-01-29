@@ -28,11 +28,14 @@ def simple_plot(data, plt_3d=False, n_points=-1):
     plt.show()
 
 class Body:
-    def __init__(self, m, p, v):
+    def __init__(self, m, p, v, names):
         self.dim = len(p)
         self.m = float(m)
         self.p = np.array(p, dtype=float)
         self.v = np.array(v, dtype=float)
+        if len(names) == 2:
+            self.name = names[0].lower()
+            self.parent = names[1].lower()
     def to_string(self):
         s = ""
         s += str(self.m) + "\n"
@@ -102,19 +105,7 @@ class System:
                 str((etot - self.e0) / self.e0) + "\n"
             )
         else:
-            syspy.stdout.write(
-                "t " + str(t) + "\n" + \
-                "steps " + str(n) + "\n"
-            )
-            syspy.stdout.write(
-                "E_kin " + str(ek) + "\n" + \
-                "E_pot " + str(ep) + "\n" + \
-                "E_tot " + str(etot) + "\n"
-            )
-            syspy.stdout.write(
-                "E_diff " + str(etot - self.e0) + "\n\n"
-            )
-            self.e_diff.append(etot-self.e0)
+            self.e_diff.append(etot - self.e0)
 
 def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1, verbose=True):
     n = 0
@@ -179,7 +170,7 @@ def set_parser(parser):
         help="maximum amount of points plotted"
     )
 
-def get_system_data(f=None):
+def get_system_data(f=None, names=False):
     input_dim = -1
     b_data = []
     if not f:
@@ -191,16 +182,21 @@ def get_system_data(f=None):
         line_strip = line.strip()
         if line_strip == '':
             break
-        b_params = [float(x) for x in line_strip.split()]
+        b_params = [float(x) for x in line_strip.split()[:7]]
         b_dim, r = divmod(len(b_params[1:]), 2)
         assert r == 0, "Inconsistent input dimensions"
         if input_dim < 0: input_dim = b_dim
         else: assert input_dim == b_dim, "Inconsistent input dimensions"
+        if names:
+            assert len(line_strip.split()) == 9, "Inconsistent input dimensions"
+            b_names = [str(x) for x in line_strip.split()[7:]]
+        else: b_names = []
         b_data.append(
             Body(
                 b_params[0],
                 b_params[1:b_dim+1],
-                b_params[b_dim+1:2*b_dim+1]
+                b_params[b_dim+1:2*b_dim+1],
+                b_names
             )
         )
     return G, b_data
