@@ -62,6 +62,8 @@ def evaluation(data, dt, system):
 def plot_diff(data, methods, t_end):
     # http://akuederle.com/matplotlib-zoomed-up-inset
 
+    methods = np.array(methods)
+
     t_energy = np.linspace(0, t_end, len(data[0][0]))
     t_refcheck = np.linspace(0, t_end, len(data[0][1][0]))
 
@@ -69,6 +71,8 @@ def plot_diff(data, methods, t_end):
     ax2 = ax1.twinx()
 
     ax1.set_xlabel('time (s)')
+    ax1.set_xlim(0, 2.2e9)
+    # ax1.set_ylim()
     ax1.set_ylabel('ref error')
     ax2.set_ylabel('energy error')
 
@@ -79,45 +83,42 @@ def plot_diff(data, methods, t_end):
             c='C'+str(i % len(methods)), linestyle="-"
         )
         lines1.append(line)
-    ax1.legend(lines1, methods, loc=1)
+    ax1.legend(lines1, methods, bbox_to_anchor=(1,0), loc="lower right",
+                bbox_transform=fig.transFigure, ncol=5)
 
     lines2 = []
+    skip = []
     if "euler" in methods:
-        euler_at = np.where(np.array(methods) == "euler")[0][0]
-    else:
-        euler_at = -1
+        skip.append(np.where(np.array(methods) == "euler")[0][0])
+    if "rk2" in methods:
+        skip.append(np.where(np.array(methods) == "rk2")[0][0])
     for i in range(len(methods)):
-        if i == euler_at:
+        if i in skip:
             continue
         line, = ax2.plot(
             t_energy, data[i][0],
             c='C'+str(i % len(methods)), linestyle="-."
         )
         lines2.append(line)
-    if euler_at < 0:
-        ax2.legend(lines2, methods, loc=3)
-    else:
-        ax2.legend(
-            lines2, np.append(methods[:euler_at], methods[euler_at+1:]), loc=3
-        )
+    ax2.legend(
+        lines2,
+        methods[[i for i in range(len(methods)) if i not in skip]],
+        loc=2
+    )
 
-#    plt.grid(True)
+    axins = zoomed_inset_axes(ax1, (2e8 / 2.3e4), loc=1)
+    for i in range(len(methods)):
+        line, = axins.plot(t_refcheck, data[i][1][0], c='C'+str(i % len(methods)), linestyle="-")
+    x1, x2, y1, y2 = (1.576e9 + 780000), (1.576e9 + 820000), 1.99587e7, 1.9961e7
+    axins.set_xlim(x1, x2)
+    axins.set_ylim(y1, y2)
+    # plt.yticks(visible=False)
+    plt.xticks(visible=False)
 
-#    axins = zoomed_inset_axes(ax1, 5000, loc=2)
-#    for i in range(len(methods)):
-#        line, = axins.plot(
-#            t_refcheck, data[i][1][0],
-#            c='C'+str(i % len(methods)), linestyle="-"
-#        )
-#    x1, x2, y1, y2 = (1.576e9 + 760000), (1.576e9 + 840000), 1.99585e7, 1.9961e7
-#    axins.set_xlim(x1, x2)
-#    axins.set_ylim(y1, y2)
-#    plt.yticks(visible=False)
-#    plt.xticks(visible=False)
-
-#    mark_inset(ax1, axins, loc1=1, loc2=4, fc="none", ec="0.5")
+    mark_inset(ax1, axins, loc1=2, loc2=3, fc="none", ec="0.5")
 
     plt.grid(True)
+    plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
@@ -143,7 +144,7 @@ if __name__ == "__main__":
             G, sys = get_system_data(f, True)
             system = System(G, sys, method)
             print("itype " + str(system.itype) + "\n")
-            sim_data = simulate(system, args.t_end, args.dt, args.dt,
+            sim_data = simulate(system, args.t_end, args.dt, args.t_dia,
                                 args.t_out, args.verbose)
             ref_diff = evaluation(sim_data, args.dt, system.sys)
             method_data.append([system.e_diff, ref_diff])
