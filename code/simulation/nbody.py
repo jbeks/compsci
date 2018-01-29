@@ -8,7 +8,7 @@ import system_interpolation as cmod
 
 def simple_plot(data, plt_3d=False, n_points=-1):
     if n_points >= 0 and n_points < len(data[0][0]):
-        data = [[dim[::(len(dim)//n_points)] for dim in b] for b in data]
+        data = [[dim[::(len(dim)//n_points+1)] for dim in b] for b in data]
     fig = plt.figure()
     if plt_3d:
         ax = fig.add_subplot(111, projection="3d")
@@ -104,8 +104,9 @@ class System:
                 "  (E_tot - E_init) / E_init =  " + \
                 str((etot - self.e0) / self.e0) + "\n"
             )
+            self.e_diff.append((etot - self.e0) / self.e0)
         else:
-            self.e_diff.append(etot - self.e0)
+            self.e_diff.append((etot - self.e0) / self.e0)
 
 def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1, verbose=True):
     n = 0
@@ -209,4 +210,7 @@ if __name__ == "__main__":
     system = System(G, sys, args.itype.lower())
     sim_data = simulate(system, args.t_end, args.dt, args.t_dia, args.t_out)
     if args.plot_2d or args.plot_3d:
-        simple_plot([p.T for p in sim_data], args.plot_3d, args.n_points)
+        simple_plot(
+            [np.array(p).T for p in sim_data], args.plot_3d, args.n_points
+        )
+
