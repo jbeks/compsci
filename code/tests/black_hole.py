@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+from warnings import warn
 
 import code_dir
 from nbody import *
@@ -17,15 +18,26 @@ def set_parser_bh(parser):
 
 
 def simulate_bh(dist, speed, args, G, sys):
-    start_dist = 5*dist
+    start_dist = 1.5e11
+
     e1 = np.array([0,1,0], dtype=float)
     e2 = np.array([0,0,1], dtype=float)
 
     e1 /= np.linalg.norm(e1)
     e2 /= np.linalg.norm(e2)
 
+    # for time of 2.5 * orbit neptune
+    min_height = 1.2 * 5201280000. * speed / 2
+    if start_dist < dist:
+        warn("Given distance is larger than assumed largest distance")
+        height = min_height
+    else:
+        height = np.sqrt(start_dist ** 2 - dist ** 2)
+        if height < min_height:
+            height = min_height
+
     vec_dist = dist * e1
-    vec_height = np.sqrt(start_dist ** 2 - dist ** 2) * e2
+    vec_height = height * e2
     bh_p = vec_dist + vec_height
     bh_v = -e2 * speed
 
@@ -34,7 +46,7 @@ def simulate_bh(dist, speed, args, G, sys):
         6.5 * sun_m,                                    # stellar black hole
         bh_p,
         bh_v,
-        ("Black_Hole", "NONE")
+        ("Black_Hole", "None")
     )
 
     system = System(G, sys+[bh], args.itype.lower())

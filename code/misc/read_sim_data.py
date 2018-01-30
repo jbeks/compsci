@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 
 def read_sim_data():
     t = []
@@ -32,5 +33,5 @@ def read_sim_data():
 
 if __name__ == "__main__":
     for x in read_sim_data():
-        print(x)
+        print(np.array(x).shape)
 

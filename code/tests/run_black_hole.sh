@@ -1,10 +1,10 @@
 #!/bin/bash
 # run with "bash", not "sh"
 
-DT=216000
-INTTYPE="rk4"
-DIST=(1e9 1e10)
-VEL=(20 80)
+DT=43200
+INTTYPE="hermite"
+DIST=(1e9 20e9 40e9 60e9 80e9 100e9)
+VEL=(20 350 680 1010 1340 1670 2000)
 
 if [[ $(uname -s) == Linux ]]
 then
@@ -26,13 +26,20 @@ SCRIPT=$ROOTDIR$SEP$SCRIPTDIR$SEP$SCRIPTNAME
 INFILE=$ROOTDIR$SEP$INDIRNAME$SEP$INNAME
 OUTDIR=$ROOTDIR$SEP$OUTDIRNAME
 
+SHORTDIR="code"$SEP"misc"
+SHORTNAME="shorten_sim_data.py"
+SHORT=$ROOTDIR$SEP$SHORTDIR$SEP$SHORTNAME
+
 for dist in ${DIST[@]}
 do
     for vel in ${VEL[@]}
     do
-        OUTNAME="data_dt"$DT"_dist"$dist"_vel"$vel".out"
+        echo "dist: "$dist" ; vel: "$vel
+        OUTNAME="simdata_"$DT"_"$dist"_"$vel".out"
         python -O $SCRIPT < $INFILE $INTTYPE 0 $DT -o $DT \
-            $dist $vel > $OUTDIR$SEP$OUTNAME
+            $dist $vel > $OUTDIR$SEP$OUTNAME".tmp"
+        python -O $SHORT < $OUTDIR$SEP$OUTNAME".tmp" > $OUTDIR$SEP$OUTNAME
+        rm -f $OUTDIR$SEP$OUTNAME".tmp"
     done
 done
 
