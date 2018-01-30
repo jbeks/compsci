@@ -1,7 +1,8 @@
 #!/bin/bash
 
 CURDIR=${PWD}
-FILEDIR="$(dirname "$0")"
-cd $FILEDIR"/simulation"
+FILEDIR=$(dirname $(readlink -f $0))
+cd $FILEDIR
 python setup.py build_ext --inplace
 cd $CURDIR
+

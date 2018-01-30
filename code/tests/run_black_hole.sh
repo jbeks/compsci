@@ -6,6 +6,8 @@ INTTYPE="hermite"
 DIST=(1e9 20e9 40e9 60e9 80e9 100e9)
 VEL=(20 350 680 1010 1340 1670 2000)
 
+MAXT=1.6e10
+
 if [[ $(uname -s) == Linux ]]
 then
     SEP="/"
@@ -29,6 +31,15 @@ OUTDIR=$ROOTDIR$SEP$OUTDIRNAME
 SHORTDIR="code"$SEP"misc"
 SHORTNAME="shorten_sim_data.py"
 SHORT=$ROOTDIR$SEP$SHORTDIR$SEP$SHORTNAME
+
+SIMDIR="code"$SEP"simulation"
+SIMNAME="nbody.py"
+SIM=$ROOTDIR$SEP$SIMDIR$SEP$SIMNAME
+BASELINE="baseline_"$DT".out"
+
+python -O $SIM < $INFILE $INTTYPE $MAXT $DT -o $DT > $OUTDIR$SEP$BASELINE".tmp"
+python -O $SHORT < $OUTDIR$SEP$BASELINE".tmp" > $OUTDIR$SEP$BASELINE
+rm -f $OUTDIR$SEP$BASELINE".tmp"
 
 for dist in ${DIST[@]}
 do
