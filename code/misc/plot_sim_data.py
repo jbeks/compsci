@@ -28,5 +28,5 @@ if __name__ == "__main__":
     else:
         _, _, sim_data = read_short_sim_data()
     # plot data
-    simple_plot([np.array(p).T for p in sim_data[-2:]], args.plot_3d, args.n_points)
+    simple_plot([np.array(p).T for p in sim_data], args.plot_3d, args.n_points)
 

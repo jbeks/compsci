@@ -4,9 +4,12 @@
 # set simulation parameters
 DT=43200
 INTTYPE="hermite"
-DIST=(1e9 20e9 40e9 60e9 80e9 100e9)
-VEL=(20 350 680 1010 1340 1670 2000)
+DIST=(1e9 5e9 10e9 15e9 20e9)
+VEL=(350 680 1010 1340 1670 2000)
+#TODO VEL=(20 350 680 1010 1340 1670 2000)
 
+# time longer than longest simulation
+# (used to create reference without black hole)
 MAXT=1.6e10
 
 # determine separator
@@ -20,7 +23,7 @@ fi
 # set script and file names
 INNAME="orbits.in"
 INDIRNAME="input"
-OUTDIRNAME="output"
+OUTDIRNAME="output"$SEP"out"
 SCRIPTDIR="code"$SEP"tests"
 SCRIPTNAME="black_hole.py"
 
@@ -28,7 +31,7 @@ SCRIPTNAME="black_hole.py"
 FILEDIR=$(dirname $(readlink -f $0))
 ROOTDIR=$(dirname $(dirname $FILEDIR))
 
-# determine paths to script input and output directory
+# determine paths to script, input and output directory
 SCRIPT=$ROOTDIR$SEP$SCRIPTDIR$SEP$SCRIPTNAME
 INFILE=$ROOTDIR$SEP$INDIRNAME$SEP$INNAME
 OUTDIR=$ROOTDIR$SEP$OUTDIRNAME

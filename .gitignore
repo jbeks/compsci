@@ -1,6 +1,7 @@
-# Ignore output directory files, but keep directory
-output/*
-!output/.gitkeep
+# Ignore data files created by scripts
+*.out
+*.res
+*.npy
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -77,6 +77,10 @@ if __name__ == "__main__":
         "-bhi", "--black_hole_index", type=int, default=-1,
         help="index of black hole in the data"
     )
+    parser.add_argument(
+        "-rd", "--resdir", type=str, default="",
+        help="path to directory to store results"
+    )
     args = parser.parse_args()
 
     time, _, sim_data = read_short_sim_data(args.file)
@@ -107,13 +111,10 @@ if __name__ == "__main__":
                 )
             )
         phel_list.append(cur_phel)
-    if os.name == "nt":
-        sep = "\\"
-    else:
-        sep = "/"
+    sep = "\\" if os.name == "nt" else "/"
     outdir = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    ) + sep + "output"
+    ) + sep + "output" + sep + "out"
     reff = outdir + sep + "ori_list_data"
     if args.initialization:
         np.save(reff, phel_list)
@@ -135,7 +136,11 @@ if __name__ == "__main__":
                 )
             )
         fname = os.path.splitext(os.path.basename(args.file))[0]
-        with open(outdir + sep + fname + ".res", "w") as f:
+        if args.resdir == "":
+            resdir = outdir
+        else:
+            resdir = args.resdir
+        with open(resdir + sep + fname + ".res", "w") as f:
             for o in orbit_stabi:
                 f.write(str(o) + "\n")
 
