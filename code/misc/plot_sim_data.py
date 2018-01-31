@@ -18,15 +18,15 @@ if __name__ == "__main__":
         help="maximum amount of points plotted"
     )
     parser.add_argument(
-        "-sh", "--short_data", action="store_true",
-        help="read data from short format"
+        "-ld", "--long_data", action="store_true",
+        help="read data from long format"
     )
     args = parser.parse_args()
     # read data to be plotted
-    if args.short_data:
-        _, _, sim_data = read_short_sim_data()
-    else:
+    if args.long_data:
         _, _, sim_data, _ = read_sim_data()
+    else:
+        _, _, sim_data = read_short_sim_data()
     # plot data
-    simple_plot([np.array(p).T for p in sim_data], args.plot_3d, args.n_points)
+    simple_plot([np.array(p).T for p in sim_data[-2:]], args.plot_3d, args.n_points)
 
