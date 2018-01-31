@@ -1,9 +1,14 @@
 import sys
 from read_sim_data import read_sim_data
 
+# shorten normal format simulation data
+# to short format simulation data
 def shorten_sim_data():
+    # read data from file
     t, m, p, _ = read_sim_data()
+    # start file by listing all masses
     s = "\n".join([str(mass) for mass in m])
+    # add time and positions at that time
     for i in range(len(t)):
         s += "\n" + str(t[i])
         for b in p:
