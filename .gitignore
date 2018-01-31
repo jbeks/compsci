@@ -1,5 +1,6 @@
-# Ignore output directory
-output/
+# Ignore output directory files, but keep directory
+output/*
+!output/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
