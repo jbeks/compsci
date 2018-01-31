@@ -1,6 +1,10 @@
 import sys
+import numpy as np
 
+# reads simulation data in normal format from standard input
+# returns read data (time, mass, position, velocity)
 def read_sim_data():
+    # initialize variables
     t = []
     m = []
     p = []
@@ -8,11 +12,16 @@ def read_sim_data():
     i = 0
     j = 0
     for line in sys.stdin:
+        # record mass
         if i == 0:
             m.append(float(line.strip()))
+        # record position
         elif i == 1:
             lst = [float(x) for x in line.strip().split()]
+            # if a single value was found,
+            # previous value was e=a time value
             if len(lst) == 1:
+                # last recorded value in "m" was a time
                 t.append(m[-1])
                 m[-1] = lst[0]
                 i-= 1
@@ -21,6 +30,7 @@ def read_sim_data():
                 if len(t) == 1:
                     p.append([])
                 p[j].append(lst)
+        # record velocity
         elif i == 2:
             if len(t) == 1:
                 v.append([])
@@ -32,5 +42,5 @@ def read_sim_data():
 
 if __name__ == "__main__":
     for x in read_sim_data():
-        print(x)
+        print(np.array(x).shape)
 

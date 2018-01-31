@@ -8,7 +8,7 @@ import system_interpolation as cmod
 
 def simple_plot(data, plt_3d=False, n_points=-1):
     if n_points >= 0 and n_points < len(data[0][0]):
-        data = [[dim[::(len(dim)//n_points+1)] for dim in b] for b in data]
+        data = [[dim[::(len(dim)//n_points)] for dim in b] for b in data]
     fig = plt.figure()
     if plt_3d:
         ax = fig.add_subplot(111, projection="3d")
