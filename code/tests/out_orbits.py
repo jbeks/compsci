@@ -7,7 +7,6 @@ import sys
 import code_dir
 from read_short_sim_data import read_short_sim_data
 
-<<<<<<< HEAD
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)
@@ -17,8 +16,6 @@ def angle(current, last):
     v2_u = unit_vector(last)
     return math.degrees(np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)))
 
-=======
->>>>>>> 9b2a56a97e3968c61642bbe5b39b260d2065541b
 def find_period(data_body, data_center, start):
     data = data_body - data_center
     prev_dist = np.linalg.norm(data[start + 1] - data[start])
@@ -53,7 +50,6 @@ def phelions(points, center_points):
             max_d = dist
     return max_d, min_d
 
-<<<<<<< HEAD
 def no_orbit(planet_data, center_data, i, ori_pheli):
     aphelion_check = (np.linalg.norm(planet_data[i] - center_data[i]) > 2 * ori_pheli)
     angle_check = True
@@ -63,21 +59,11 @@ def no_orbit(planet_data, center_data, i, ori_pheli):
         angle_check = (angle(old_position, new_position) < 0.5)
     return aphelion_check and angle_check
 
-def out_orbit_time(orbit_num, planet_data, center_data, ori_pheli, time):
-    orbit_indices = orbit_data(planet_data, center_data)
-    for i in range(orbit_indices[orbit_num], len(planet_data)):
-        if no_orbit(planet_data, center_data, i, ori_pheli[orbit_num][0]):
-            return time[i]
-=======
 def out_orbit_time(orbit_num, planet_data, center_data, ori_pheli, dt):
     orbit_indices = orbit_data(planet_data, center_data)
     for i in range(orbit_indices[orbit_num], len(planet_data)):
-        if (
-            np.linalg.norm(planet_data[i]-center_data[i]) \
-            > 2 * (ori_pheli[orbit_num][0])
-        ):
+        if no_orbit(planet_data, center_data, i, ori_pheli[orbit_num][0]):
             return i * dt
->>>>>>> 9b2a56a97e3968c61642bbe5b39b260d2065541b
     return -1
 
 def orbit_sta(new_phelis, ori_pheli, planet_data, center_data, dt):
@@ -166,10 +152,6 @@ if __name__ == "__main__":
                     time[1] - time[0]
                 )
             )
-<<<<<<< HEAD
-            orbit_stabi.append('next_planet')
-        print(orbit_stabi)
-=======
         fname = os.path.splitext(os.path.basename(args.file))[0]
         if args.resdir == "":
             resdir = outdir
@@ -178,5 +160,3 @@ if __name__ == "__main__":
         with open(resdir + sep + fname + ".res", "w") as f:
             for o in orbit_stabi:
                 f.write(str(o) + "\n")
-
->>>>>>> 9b2a56a97e3968c61642bbe5b39b260d2065541b
