@@ -26,9 +26,9 @@ def plot_heatmap(mp, xticks=[], yticks=[], r=[], title="", xl="", yl=""):
     if yticks != []:
         plt.yticks(list(range(len(yticks))), yticks)
     if len(r) != 2:
-        plt.imshow(mp, cmap="RdYlBu")
+        plt.imshow(mp, cmap="RdYlBu_r")
     else:
-        plt.imshow(mp, vmin=r[0], vmax=r[1], cmap="RdYlBu")
+        plt.imshow(mp, vmin=r[0], vmax=r[1], cmap="RdYlBu_r")
     plt.title(title)
     plt.xlabel(xl)
     plt.ylabel(yl)
@@ -66,20 +66,12 @@ if __name__ == "__main__":
         mps.append(mp)
     mps = np.array(mps)
 
-    mx = 1.25 * np.max(mps)
-    mps[np.where(mps < 0)] = mx
-    mn = np.min(mps)
+    nplanets = np.sum(mps > 0, axis=0)
 
-    planets = [
-        "Mercury", "Venus", "Earth", "Mars",
-        "Jupiter", "Saturn", "Uranus", "Neptune"
-    ]
-    for mp, pname in zip(mps, planets):
-        plot_heatmap(
-            mp, ["{:.0e}".format(dist) for dist in dists], speeds, (mn, mx),
-            pname, "distance (km)", "speed (km/s)"
-        )
-
-planets = ["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"]
+    plot_heatmap(
+        nplanets, ["{:.0e}".format(dist) for dist in dists], speeds,
+        (0, len(mps)), "Amount of detatched planets",
+        "distance (km)", "speed (km/s)"
+    )
 
 
