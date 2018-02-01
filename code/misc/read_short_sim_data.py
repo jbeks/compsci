@@ -3,14 +3,18 @@ import numpy as np
 
 # reads simulation data in short format from standard input
 # returns read data (time, mass, position)
-def read_short_sim_data():
+def read_short_sim_data(fname=None):
     # initialize variables
     t = []
     m = []
     p = []
     mass_done = False
     i = 0
-    for line in sys.stdin:
+    if fname:
+        f = open(fname)
+    else:
+        f = sys.stdin
+    for line in f:
         # first record all mass values
         if not mass_done:
             lst = [float(x) for x in line.strip().split()]
@@ -38,6 +42,8 @@ def read_short_sim_data():
             else:
                 t.append(float(line.strip()))
                 i = 0
+    if fname:
+        f.close()
     return t, m, p
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ def simulate_bh(dist, speed, args, G, sys):
     start_dist = 1.5e11
 
     # axis on which the black hole is placed
-    e1 = np.array([0,1,0], dtype=float)
+    e1 = np.array([1,0,0], dtype=float)
     e2 = np.array([0,0,1], dtype=float)
     e1 /= np.linalg.norm(e1)
     e2 /= np.linalg.norm(e2)
