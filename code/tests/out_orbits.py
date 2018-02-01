@@ -1,10 +1,19 @@
 import numpy as np
 import argparse
+import math
 import os
 
 import code_dir
 from read_short_sim_data import read_short_sim_data
 
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angle(current, last):
+    v1_u = unit_vector(current)
+    v2_u = unit_vector(last)
+    return math.degrees(np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)))
 
 def find_period(data_body, data_center, start):
     data = data_body - data_center
@@ -16,7 +25,7 @@ def find_period(data_body, data_center, start):
         if not back:
             if cur_dist < prev_dist:
                 back = True
-        elif cur_dist > prev_dist and cur_dist < 3 * orig:
+        elif cur_dist > prev_dist: # and angle(cur_dist, orig) < 30:
             return i
         prev_dist = cur_dist
     return -1
@@ -40,13 +49,19 @@ def phelions(points, center_points):
             max_d = dist
     return max_d, min_d
 
+def no_orbit(planet_data, center_data, i, ori_pheli):
+    aphelion_check = (np.linalg.norm(planet_data[i] - center_data[i]) > 2 * ori_pheli)
+    angle_check = True
+    if i > 300:
+        old_position = planet_data[i - 300] - planet_data[i - 301]
+        new_position = planet_data[i] - planet_data[i-1]
+        angle_check = (angle(old_position, new_position) < 0.5)
+    return aphelion_check and angle_check
+
 def out_orbit_time(orbit_num, planet_data, center_data, ori_pheli, time):
     orbit_indices = orbit_data(planet_data, center_data)
     for i in range(orbit_indices[orbit_num], len(planet_data)):
-        if (
-            np.linalg.norm(planet_data[i]-center_data[i]) \
-            > 2 * (ori_pheli[orbit_num][0])
-        ):
+        if no_orbit(planet_data, center_data, i, ori_pheli[orbit_num][0]):
             return time[i]
     return -1
 
@@ -94,6 +109,7 @@ if __name__ == "__main__":
     for planet in sim_data_subset:
         cur_phel = []
         orbit_list = orbit_data(planet, sim_data[args.sun_index])
+        print("orbits: " + str(len(orbit_list) - 1))
         for i in range(len(orbit_list) - 1):
             cur_phel.append(
                 (
@@ -133,21 +149,3 @@ if __name__ == "__main__":
             )
             orbit_stabi.append('next_planet')
         print(orbit_stabi)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
