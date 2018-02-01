@@ -18,7 +18,7 @@ def read_res(resdir):
                 i += 1
     return res
 
-def plot_heatmap(mp, yticks=[], xticks=[], r=[]):
+def plot_heatmap(mp, xticks=[], yticks=[], r=[], title="", xl="", yl=""):
     plt.figure()
     plt.imshow(mp)
     if xticks != []:
@@ -26,9 +26,12 @@ def plot_heatmap(mp, yticks=[], xticks=[], r=[]):
     if yticks != []:
         plt.yticks(list(range(len(yticks))), yticks)
     if len(r) != 2:
-        plt.imshow(mp, cmap="coolwarm")
+        plt.imshow(mp, cmap="RdYlBu_r")
     else:
-        plt.imshow(mp, vmin=r[0], vmax=r[1], cmap="RdYlBu")
+        plt.imshow(mp, vmin=r[0], vmax=r[1], cmap="RdYlBu_r")
+    plt.title(title)
+    plt.xlabel(xl)
+    plt.ylabel(yl)
     plt.tight_layout()
     plt.show()
     return
@@ -50,28 +53,25 @@ if __name__ == "__main__":
     speeds = list(set(speeds))
     dists.sort()
     speeds.sort()
+    speeds = speeds[::-1]
 
     mps = []
     for r in res:
         mp = []
-        for d in dists:
+        for s in speeds:
             tmp = []
-            for s in speeds:
+            for d in dists:
                 tmp.append(r[d][s])
             mp.append(tmp)
         mps.append(mp)
     mps = np.array(mps)
 
-    mx = 1.25 * np.max(mps)
-    mps[np.where(mps < 0)] = mx
-    mn = np.min(mps)
+    nplanets = np.sum(mps > 0, axis=0)
 
-    for mp in mps:
-        print(mp)
-        plot_heatmap(
-            mp, ["{:.1e}".format(dist) for dist in dists], speeds, (mn, mx)
-        )
-
-#PLANETS = ["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"]
+    plot_heatmap(
+        nplanets, ["{:.0e}".format(dist) for dist in dists], speeds,
+        (0, len(mps)), "Amount of detatched planets",
+        "distance (km)", "speed (km/s)"
+    )
 
 
