@@ -22,7 +22,7 @@ def plot_heatmap(mp, xticks=[], yticks=[], r=[], title="", xl="", yl=""):
     plt.figure()
     plt.imshow(mp)
     if xticks != []:
-        plt.xticks(list(range(len(xticks))), xticks)
+        plt.xticks(list(range(len(xticks))), xticks, rotation=30, ha='right')
     if yticks != []:
         plt.yticks(list(range(len(yticks))), yticks)
     if len(r) != 2:
@@ -69,8 +69,8 @@ if __name__ == "__main__":
     nplanets = np.sum(mps > 0, axis=0)
 
     plot_heatmap(
-        nplanets, ["{:.0e}".format(dist) for dist in dists], speeds,
-        (0, len(mps)), "Amount of detatched planets",
+        nplanets, ["{:.2e}".format(dist) for dist in dists], speeds,
+        (0, len(mps)), "Amount of detached planets",
         "distance (km)", "speed (km/s)"
     )
 
