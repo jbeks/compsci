@@ -19,19 +19,21 @@ def read_res(resdir):
     return res
 
 def plot_heatmap(mp, xticks=[], yticks=[], r=[], title="", xl="", yl=""):
-    plt.figure()
-    plt.imshow(mp)
-    if xticks != []:
-        plt.xticks(list(range(len(xticks))), xticks, rotation=30, ha='right')
-    if yticks != []:
-        plt.yticks(list(range(len(yticks))), yticks)
     if len(r) != 2:
-        plt.imshow(mp, cmap="RdYlBu_r")
-    else:
-        plt.imshow(mp, vmin=r[0], vmax=r[1], cmap="RdYlBu_r")
+        r = [np.min(mp), np.max(mp)]
+    plt.figure()
+    plt.imshow(mp, vmin=r[0], vmax=r[1], cmap="RdYlBu_r")
+    heatmap = plt.pcolor(
+        [[0]], vmin=r[0], vmax=r[1], cmap="RdYlBu_r", visible=False
+    )
     plt.title(title)
     plt.xlabel(xl)
     plt.ylabel(yl)
+    if xticks != []:
+        plt.xticks(list(range(len(xticks))), xticks)
+    if yticks != []:
+        plt.yticks(list(range(len(yticks))), yticks)
+    plt.colorbar(heatmap)
     plt.tight_layout()
     plt.show()
     return
@@ -69,9 +71,20 @@ if __name__ == "__main__":
     nplanets = np.sum(mps > 0, axis=0)
 
     plot_heatmap(
-        nplanets, ["{:.2e}".format(dist) for dist in dists], speeds,
-        (0, len(mps)), "Amount of detached planets",
-        "distance (km)", "speed (km/s)"
+        nplanets,
+        [dist / 1e9 for dist in dists],
+        [int(speed) for speed in speeds],
+        (0, len(mps)),
+        "Amount of detached planets",
+        r"Distance from barycenter ($10^9$ km)",
+        "Speed (km/s)"
     )
+
+#    for i in range(len(mps)):
+#        plot_heatmap(
+#            mps[i], ["{:.2e}".format(dist) for dist in dists], speeds,
+#            (0, np.max(mps)), str(i),
+#            "distance (km)", "speed (km/s)"
+#        )
 
 
