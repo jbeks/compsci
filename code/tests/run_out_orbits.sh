@@ -2,7 +2,9 @@
 # run with "bash", not "sh"
 
 # set timestep for wich script is run
-DT=43200
+DT=1080000                                      # used for example testing
+#DT=43200                                       # used for actual testing
+
 
 # determine separator
 if [[ $(uname -s) == Linux ]]

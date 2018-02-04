@@ -2,15 +2,22 @@
 # run with "bash", not "sh"
 
 # set simulation parameters
-DT=43200
-INTTYPE="hermite"
-DIST=(1e9 5e9 10e9 15e9 20e9)
-VEL=(350 680 1010 1340 1670 2000)
-#TODO VEL=(20 350 680 1010 1340 1670 2000)
 
 # time longer than longest simulation
 # (used to create reference without black hole)
 MAXT=1.6e10
+
+# interpolation method
+INTTYPE="hermite"
+
+# used for example testing
+DT=1080000
+DIST=(1e9 5e9 10e9 15e9)
+VEL=(20 240 460 680)
+# used for actual testing
+#DT=43200
+#DIST=(1e9 2.5e9 5e9 7.5e9 10e9 12.5e9 15e9)
+#VEL=(20 130 240 350 460 570 680)
 
 # determine separator
 if [[ $(uname -s) == Linux ]]

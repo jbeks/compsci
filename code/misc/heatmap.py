@@ -25,7 +25,9 @@ def read_res(resdir):
     return res
 
 # create heatmap of data in mp
-def plot_heatmap(mp, xticks=[], yticks=[], r=[], title="", xl="", yl=""):
+def plot_heatmap(
+    mp, xticks=[], yticks=[], r=[], title="", xl="", yl="", save=""
+):
     # set range if no range is given
     if len(r) != 2:
         r = [np.min(mp), np.max(mp)]
@@ -44,19 +46,28 @@ def plot_heatmap(mp, xticks=[], yticks=[], r=[], title="", xl="", yl=""):
         plt.xticks(list(range(len(xticks))), xticks)
     if yticks != []:
         plt.yticks(list(range(len(yticks))), yticks)
-    plt.colorbar(heatmap)
+    cb = plt.colorbar(heatmap)
+    cb.set_label("N planets")
     plt.tight_layout()
+    # save figure if asked to
+    if save != "":
+        plt.savefig(save)
     plt.show()
     return
 
 if __name__ == "__main__":
     # determine appropriate parameter
     sep = "\\" if os.name == "nt" else "/"
+
     # create dictionaries with res-data
-    resdir = os.path.abspath(
+    rootdir = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    ) + sep + "output" + sep + "res"
+    )
+    resdir = rootdir + sep + "output" + sep + "res"
     res = read_res(resdir)
+
+    figdir = rootdir + sep + "output" + sep + "figs"
+    figloc = figdir + sep + "heatmap.png"
 
     # convert dictionary into spead and distance lists
     dists = []
@@ -82,12 +93,6 @@ if __name__ == "__main__":
             mp.append(tmp)
         mps.append(mp)
     mps = np.array(mps)
-#    for i in range(len(mps)):
-#        plot_heatmap(
-#            mps[i], ["{:.2e}".format(dist) for dist in dists], speeds,
-#            (0, np.max(mps)), str(i),
-#            "distance (km)", "speed (km/s)"
-#        )
 
     # create heatmap for number of planets
     nplanets = np.sum(mps > 0, axis=0)
@@ -98,8 +103,9 @@ if __name__ == "__main__":
         [dist / 1e9 for dist in dists],
         [int(speed) for speed in speeds],
         (0, len(mps)),
-        "Amount of detached planets",
+        "Number of detached planets",
         r"Distance from barycenter ($10^9$ km)",
-        "Speed (km/s)"
+        "Speed (km/s)",
+        figloc
     )
 

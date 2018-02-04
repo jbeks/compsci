@@ -54,6 +54,7 @@ def no_orbit(planet_data, center_data, i, ori_pheli):
     aphelion_check = (np.linalg.norm(planet_data[i] - center_data[i]) > 2 * ori_pheli)
     angle_check = True
     if i > 300:
+        # TODO velocities, not positions
         old_position = planet_data[i - 300] - planet_data[i - 301]
         new_position = planet_data[i] - planet_data[i-1]
         angle_check = (angle(old_position, new_position) < 0.5)
