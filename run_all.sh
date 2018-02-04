@@ -33,8 +33,8 @@ EVAL=$TESTS$SEP$EVALNAME
 HM=$MISC$SEP$HMNAME
 
 # run all scripts
-#bash $SETUP
-#bash $BH
-#bash $EVAL
+bash $SETUP
+bash $BH
+bash $EVAL
 python $HM
 

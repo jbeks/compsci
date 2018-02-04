@@ -105,7 +105,7 @@ if __name__ == "__main__":
         (0, len(mps)),
         "Number of detached planets",
         r"Distance from barycenter ($10^9$ km)",
-        "Speed (km/s)",
+        "Velocity (km/s)",
         figloc
     )
 
