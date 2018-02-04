@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import system_interpolation as cmod
 
-# plot simulation data
 def simple_plot(data, plt_3d=False, n_points=-1):
+    """
+    Plot simulation data.
+    """
     # reduce points if needed
     if n_points >= 0 and n_points < len(data[0][0]):
         data = [[dim[::(len(dim)//n_points)] for dim in b] for b in data]
@@ -32,8 +34,10 @@ def simple_plot(data, plt_3d=False, n_points=-1):
     plt.axis("equal")
     plt.show()
 
-# body for n-body simulation
 class Body:
+    """
+    Body for n-body simulation.
+    """
     def __init__(self, m, p, v, names):
         self.dim = len(p)
         self.m = float(m)
@@ -63,8 +67,10 @@ class Body:
             ep -= b.m / np.linalg.norm(vector)
         return ep * self.m * G
 
-# system to hold bodies for n-body simulation
 class System:
+    """
+    System to hold bodies for n-body simulation.
+    """
     def __init__(self, G, sys, itype):
         self.G = G
         self.sys = sys
@@ -126,8 +132,10 @@ class System:
         else:
             self.e_diff.append((etot - self.e0) / self.e0)
 
-# simulate system for given time with given timestep
 def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1, verbose=True):
+    """
+    Simulate system for given time with given timestep.
+    """
     n = 0
     t = 0
     t_out = dt_out - 0.5 * dt
@@ -162,8 +170,10 @@ def simulate(system, t_end, dt, dt_dia=-1, dt_out=-1, verbose=True):
         p.squeeze() for p in np.split(np.array(lst), len(system.sys), axis=1)
     ]
 
-# add parser arguments for script
 def set_parser(parser):
+    """
+    Add parser arguments for script.
+    """
     parser.add_argument(
         "itype", type=str,
         help="integration type"
@@ -197,8 +207,10 @@ def set_parser(parser):
         help="maximum amount of points plotted"
     )
 
-# read system data from input file
 def get_system_data(f=None, names=False):
+    """
+    Read system data from input file.
+    """
     input_dim = -1
     b_data = []
     # used standard input if no file was given

@@ -2,8 +2,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-# read res files into list of dictionaries
 def read_res(resdir):
+    """
+    Read res files into list of dictionaries.
+    """
     # determine appropriate parameter
     sep = "\\" if os.name == "nt" else "/"
     res = []
@@ -24,10 +26,12 @@ def read_res(resdir):
                 i += 1
     return res
 
-# create heatmap of data in mp
 def plot_heatmap(
     mp, xticks=[], yticks=[], r=[], title="", xl="", yl="", save=""
 ):
+    """
+    Create heatmap of data in mp.
+    """
     # set range if no range is given
     if len(r) != 2:
         r = [np.min(mp), np.max(mp)]
