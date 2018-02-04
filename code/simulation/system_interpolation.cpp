@@ -194,6 +194,7 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
 }
 
 // calculate acceleration using Newtons laws of motion
+// http://www.artcompsci.org/kali/vol/two_body_problem_1/ch05.html
 myVector acceleration(
     unsigned int k, double G,
     vector<double> &m, vector<myVector> &p
@@ -209,6 +210,7 @@ myVector acceleration(
 }
 
 // calculate jerk (derivative of acceleration)
+// http://www.artcompsci.org/kali/vol/two_body_problem_2/ch11.html
 myVector jerk(
     unsigned int k, double G,
     vector<double> &m, vector<myVector> &p, vector<myVector> &v
@@ -227,7 +229,13 @@ myVector jerk(
 }
 
 // implementations of different interpolation methods
+// most can be found in these books (more specific links above the methods)
+// some have one extra reference
+// http://www.artcompsci.org/kali/vol/two_body_problem_1/title.html
+// http://www.artcompsci.org/kali/vol/two_body_problem_2/title.html
+// http://www.artcompsci.org/kali/vol/n_body_problem/title.html
 
+// http://www.artcompsci.org/kali/vol/two_body_problem_1/ch05.html
 void euler(
     double dt, double G,
     vector<double> &m, vector<myVector> &p, vector<myVector> &v
@@ -242,6 +250,7 @@ void euler(
     }
 }
 
+// http://www.artcompsci.org/kali/vol/two_body_problem_2/ch01.html
 void verlet(
     double dt, double G,
     vector<double> &m, vector<myVector> &p, vector<myVector> &v
@@ -263,6 +272,7 @@ void verlet(
     }
 }
 
+// http://www.artcompsci.org/kali/vol/two_body_problem_2/ch03.html
 void rk2(
     double dt, double G,
     vector<double> &m, vector<myVector> &p, vector<myVector> &v
@@ -287,6 +297,8 @@ void rk2(
     }
 }
 
+// http://www.artcompsci.org/kali/vol/two_body_problem_2/ch04.html
+// Handbook of Mathematical Functions, M. Abramowitz and I. A. Stegun (25.5.22)
 void rk4(
     double dt, double G,
     vector<double> &m, vector<myVector> &p, vector<myVector> &v
@@ -322,6 +334,7 @@ void rk4(
     }
 }
 
+// http://www.artcompsci.org/kali/vol/two_body_problem_2/ch11.html
 void hermite(
     double dt, double G,
     vector<double> &m, vector<myVector> &p, vector<myVector> &v

@@ -32,6 +32,7 @@ def simple_plot(data, plt_3d=False, n_points=-1):
     plt.axis("equal")
     plt.show()
 
+# body for n-body simulation
 class Body:
     def __init__(self, m, p, v, names):
         self.dim = len(p)
@@ -62,6 +63,7 @@ class Body:
             ep -= b.m / np.linalg.norm(vector)
         return ep * self.m * G
 
+# system to hold bodies for n-body simulation
 class System:
     def __init__(self, G, sys, itype):
         self.G = G

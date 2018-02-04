@@ -8,6 +8,7 @@
 
 using namespace std;
 
+// vector for easy vector calculations
 class myVector {
     public:
         myVector(unsigned int);

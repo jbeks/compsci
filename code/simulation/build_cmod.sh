@@ -1,6 +1,7 @@
 #!/bin/bash
 # build c-module in directory of this file
 
+# determine origin and destination directories
 CURDIR=${PWD}
 FILEDIR=$(dirname $(readlink -f $0))
 # move to this files directory
