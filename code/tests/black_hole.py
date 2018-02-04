@@ -5,8 +5,10 @@ from warnings import warn
 import code_dir
 from nbody import *
 
-# adds black hole arguments (speed and distance) to parser
 def set_parser_bh(parser):
+    """
+    Adds black hole arguments (speed and distance) to parser.
+    """
     parser.add_argument(
         "dist", type=float,
         help="distance of black hole from solar system"
@@ -16,9 +18,12 @@ def set_parser_bh(parser):
         help="speed of black hole (km/s)"
     )
 
-# runs a solar system simulation
-# with a black hole at the given distance and with the given speed
+
 def simulate_bh(dist, speed, args, G, sys):
+    """
+    Runs a solar system simulation
+    with a black hole at the given distance and with the given speed.
+    """
     # longest distance of black hole from solar system
     start_dist = 1.5e11
 

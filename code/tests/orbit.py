@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 import code_dir
 from nbody import *
 
-# find longest and shortest distance of data_body to data_center
 def find_dists(data_body, data_center):
+    """
+    Find longest and shortest distance of data_body to data_center.
+    """
     # initialize variables
     min_dist = np.linalg.norm(data_body[0] - data_center[0])
     max_dist = 0
@@ -20,8 +22,10 @@ def find_dists(data_body, data_center):
         if dist > max_dist: max_dist = dist
     return min_dist, max_dist
 
-# find period of fist orbit of data_body around data_center
 def find_period(data_body, data_center):
+    """
+    Find period of fist orbit of data_body around data_center.
+    """
     # determine relative positions
     data = data_body - data_center
     # determine distance between datapoint and fist datapoint
@@ -42,9 +46,11 @@ def find_period(data_body, data_center):
         prev_dist = cur_dist
     return -1
 
-# find and print minimum and maximum distances to center and orbit period
-# for all bodies in all_other
 def evaluation(center, all_other, dt):
+    """
+    Find and print minimum and maximum distances to center and orbit period
+    for all bodies in all_other.
+    """
     for i in range(len(all_other)):
         # find minimum and maximum distance to center
         mi, ma = find_dists(all_other[i], center)

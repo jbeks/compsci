@@ -1,9 +1,11 @@
 import sys
 from read_sim_data import read_sim_data
 
-# shorten normal format simulation data
-# to short format simulation data
 def shorten_sim_data():
+    """
+    Shorten normal format simulation data
+    to short format simulation data
+    """
     # read data from file
     t, m, p, _ = read_sim_data()
     # start file by listing all masses

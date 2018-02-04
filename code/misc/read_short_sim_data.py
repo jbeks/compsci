@@ -1,9 +1,11 @@
 import sys
 import numpy as np
 
-# reads simulation data in short format from standard input
-# returns read data (time, mass, position)
 def read_short_sim_data(fname=None):
+    """
+    Reads simulation data in short format from standard input
+    Returns read data (time, mass, position)
+    """
     # initialize variables
     t = []
     m = []
