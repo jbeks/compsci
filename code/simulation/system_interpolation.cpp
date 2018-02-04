@@ -7,12 +7,14 @@ using namespace std;
 
 static PyObject* interpolate(PyObject *self, PyObject *args);
 
+// set methods included in module
 static PyMethodDef system_interpolation_methods[] = {
     {"interpolate", interpolate, METH_VARARGS,
     "Interpolate positions in system"},
     {NULL, NULL, 0, NULL}
 };
 
+// set method parameters
 static struct PyModuleDef system_interpolation_definition = {
     PyModuleDef_HEAD_INIT,
     "system_interpolation",
@@ -21,6 +23,7 @@ static struct PyModuleDef system_interpolation_definition = {
     system_interpolation_methods
 };
 
+// initialize module
 PyMODINIT_FUNC PyInit_system_interpolation(void) {
     Py_Initialize();
     return PyModule_Create(&system_interpolation_definition);
@@ -48,15 +51,19 @@ void hermite(
     vector<double> &m, vector<myVector> &p, vector<myVector> &v
 );
 
+// interpolation method for module
 static PyObject* interpolate(PyObject *self, PyObject *args) {
     char *itype;
     double dt;
     double G;
     PyObject *obj;
+    // read interpolation method, timestep,
+    // gravity constant and simulation data object
     if (!PyArg_ParseTuple(args, "sddO", &itype, &dt, &G, &obj)) {
         PyErr_SetString(PyExc_Exception, "Invalid input.");
         return NULL;
     }
+    // check if simulation data object is valid
     if (!PyList_Check(obj)) {
         PyErr_SetString(PyExc_Exception, "Invalid input.");
         return NULL;
@@ -66,12 +73,15 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_Exception, "Could not create iterator.");
         return NULL;
     }
+    // read all simulation data
     vector<double> mass;
     vector<myVector> pos;
     vector<myVector> vel;
     while (true) {
         PyObject *next = PyIter_Next(iter);
+        // stop if all data has been read
         if (!next) { break; }
+        // check for valid input
         if (!PyList_Check(next)) {
             PyErr_SetString(PyExc_Exception, "Invalid input.");
             return NULL;
@@ -85,12 +95,14 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
             PyErr_SetString(PyExc_Exception, "Could not create iterator.");
             return NULL;
         }
+        // read body data
         for (int i = 0; i < 3; i++) {
             PyObject *subnext = PyIter_Next(subiter);
             if (!subnext) {
                 PyErr_SetString(PyExc_Exception, "Invalid input.");
                 return NULL;
             }
+            // first data is mass
             if (i == 0) {
                 if (!PyFloat_Check(subnext)) {
                     PyErr_SetString(PyExc_Exception, "Invalid input.");
@@ -98,6 +110,7 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
                 }
                 mass.push_back(PyFloat_AsDouble(subnext));
             }
+            // other data are vectors
             else {
                 if (!PyList_Check(subnext)) {
                     PyErr_SetString(PyExc_Exception, "Invalid input.");
@@ -110,6 +123,7 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
                     );
                     return NULL;
                 }
+                // collect vector data
                 vector<double> v;
                 while (true) {
                     PyObject *subsubnext = PyIter_Next(subsubiter);
@@ -121,15 +135,18 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
                     v.push_back(PyFloat_AsDouble(subsubnext));
                 }
                 myVector myV = myVector(v);
+                // fist vector (second data) is position
                 if (i == 1) {
                     pos.push_back(myV);
                 }
+                // second vector (third data) is velocity
                 else {
                     vel.push_back(myV);
                 }
             }
         }
     }
+    // apply given interpolation method
     if (!strcmp(itype, "euler")) {
         euler(dt, G, mass, pos, vel);
     }
@@ -146,9 +163,10 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
         hermite(dt, G, mass, pos, vel);
     }
     else {
-        PyErr_SetString(PyExc_Exception, "Unsupported integration type.");
+        PyErr_SetString(PyExc_Exception, "Unsupported interpolation type.");
         return NULL;
     }
+    // build python object form position data
     PyObject *pos_lst = PyList_New(0);
     for (unsigned int i = 0; i < pos.size(); i++) {
         vector<double> vec = pos[i].get();
@@ -158,6 +176,7 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
         }
         PyList_Append(pos_lst, tmp);
     }
+    // build python object from velocity data
     PyObject *vel_lst = PyList_New(0);
     for (unsigned int i = 0; i < vel.size(); i++) {
         vector<double> vec = vel[i].get();
@@ -167,12 +186,14 @@ static PyObject* interpolate(PyObject *self, PyObject *args) {
         }
         PyList_Append(vel_lst, tmp);
     }
+    // create and return python object with positions and velocity
     PyObject *ret = PyTuple_New(2);
     PyTuple_SetItem(ret, 0, pos_lst);
     PyTuple_SetItem(ret, 1, vel_lst);
     return ret;
 }
 
+// calculate acceleration using Newtons laws of motion
 myVector acceleration(
     unsigned int k, double G,
     vector<double> &m, vector<myVector> &p
@@ -187,6 +208,7 @@ myVector acceleration(
     return a * G;
 }
 
+// calculate jerk (derivative of acceleration)
 myVector jerk(
     unsigned int k, double G,
     vector<double> &m, vector<myVector> &p, vector<myVector> &v
@@ -203,6 +225,8 @@ myVector jerk(
     }
     return j * G;
 }
+
+// implementations of different interpolation methods
 
 void euler(
     double dt, double G,

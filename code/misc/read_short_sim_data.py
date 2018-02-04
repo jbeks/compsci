@@ -10,6 +10,7 @@ def read_short_sim_data(fname=None):
     p = []
     mass_done = False
     i = 0
+    # use file if filename is given, else use standard input
     if fname:
         f = open(fname)
     else:
@@ -42,6 +43,7 @@ def read_short_sim_data(fname=None):
             else:
                 t.append(float(line.strip()))
                 i = 0
+    # close file if file was used
     if fname:
         f.close()
     return t, m, p

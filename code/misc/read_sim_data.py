@@ -19,7 +19,7 @@ def read_sim_data():
         elif i == 1:
             lst = [float(x) for x in line.strip().split()]
             # if a single value was found,
-            # previous value was e=a time value
+            # previous value was a time value
             if len(lst) == 1:
                 # last recorded value in "m" was a time
                 t.append(m[-1])
