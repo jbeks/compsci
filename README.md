@@ -1,10 +1,10 @@
 # Project Computational Science
 
-## creating python module
-In the "code" directory, execute: python setup.py build_ext --inplace
 ## Contributors
 Steven Schoenmaker [10777679]
+
 Jetske Beks [11065249]
+
 Gawan Dekker [11025654]
 
 ## Overview
